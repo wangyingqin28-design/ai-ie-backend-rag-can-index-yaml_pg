@@ -1,0 +1,200 @@
+# 2026-06-13 17:18:04 新增：定义 krauss 外部 PostgreSQL profile；作用：把别人 PG 库接入统一外部源同步链路；理由：不能再靠离线命令手工转一次 Qdrant。
+profile_name: krauss_ai_ie_dev
+# 2026-06-13 17:18:04 新增：标记来源名；作用：状态和排查可识别 krauss 外部库；理由：多外部库同步时必须可追溯。
+source_name: krauss_ai_ie_dev
+# 2026-06-13 17:18:04 新增：声明 PG 来源表；作用：读取 public."AI_erp_Wendajilu"；理由：截图里的表位于 public schema。
+source_table: public.AI_erp_Wendajilu
+# 2026-06-13 17:18:04 新增：声明目标 collection；作用：krauss 数据写入独立 Qdrant collection；理由：不能污染 sql_rag_qa_chunks_v1 或 sql_External_database。
+target_collection: sql_krauss_ai_ie_dev
+# 2026-06-13 17:18:04 新增：启用 YAML 渲染 payload；作用：Qdrant 顶层字段、嵌套 payload 和索引全部由本 profile 声明；理由：未来新增外部库只改 YAML。
+payload_mode: profile_rendered
+
+# 2026-06-13 17:18:04 新增：声明外部库连接；作用：按 engine 选择 PostgreSQL adapter；理由：worker 不为 PG/SQLServer 写业务分支。
+connection:
+  # 2026-06-13 17:18:04 新增：声明数据库引擎；作用：registry 自动选择 PostgresExternalAdapter；理由：支持后续 SQLServer/MySQL/Oracle 扩展。
+  engine: postgresql
+  # 2026-06-13 17:18:04 新增：声明 host 环境变量；作用：从 .env 读取 krauss 主机；理由：连接信息不写死在程序。
+  host_env: KRAUSS_PG_HOST
+  # 2026-06-13 17:18:04 新增：声明端口环境变量；作用：从 .env 读取 5432；理由：不同部署端口可能不同。
+  port_env: KRAUSS_PG_PORT
+  # 2026-06-13 17:18:04 新增：声明数据库环境变量；作用：从 .env 读取 postgres；理由：数据库名可按环境切换。
+  database_env: KRAUSS_PG_DATABASE
+  # 2026-06-13 17:18:04 新增：声明用户环境变量；作用：从 .env 读取 ai_ie_dev；理由：账号属于部署配置。
+  user_env: KRAUSS_PG_USER
+  # 2026-06-13 17:18:04 新增：声明密码环境变量；作用：从 .env 读取密码；理由：密码不进入 YAML 字段策略。
+  password_env: KRAUSS_PG_PASSWORD
+  # 2026-06-13 17:18:04 新增：声明 SSL 模式环境变量；作用：兼容局域网 PG；理由：不同 PG 部署 SSL 要求不同。
+  sslmode_env: KRAUSS_PG_SSLMODE
+
+# 2026-06-13 17:18:04 新增：声明后台同步策略；作用：服务启动后持续轮询并回写状态；理由：用户要求实时联动而不是离线转一次。
+sync:
+  # 2026-06-13 17:18:04 新增：启用同步；作用：manager 扫描或 env 指定时允许启动；理由：旧 profile 默认不进入后台。
+  enabled: true
+  # 2026-06-13 17:18:04 新增：声明轮询模式；作用：没有 CDC 权限时用 poll 近实时同步；理由：别人库只给普通 SELECT/UPDATE 时仍可工作。
+  mode: poll
+  # 2026-06-13 17:18:04 新增：声明轮询间隔；作用：每 10 秒检查一次外部 PG；理由：兼顾实时性和对方库压力。
+  interval_seconds: 10
+  # 2026-06-13 17:18:04 新增：声明删除策略；作用：本轮源库少了历史 key 时删除 Qdrant point；理由：别人 PG 硬删行也要同步。
+  delete_strategy: snapshot_diff
+  # 2026-06-13 17:18:04 新增：声明软删除字段；作用：del_flag 命中删除值时删 Qdrant point；理由：截图里有 del_flag 字段。
+  delete_flag_field: del_flag
+  # 2026-06-13 17:18:04 新增：声明软删除值；作用：兼容 bool、数字和中文删除标记；理由：外部库字段类型可能变化。
+  delete_flag_values:
+    - true
+    - "true"
+    - 1
+    - "1"
+    - Y
+    - y
+    - 已删除
+  # 2026-06-13 17:18:04 新增：声明状态字段；作用：point 成功写入后 UPDATE "ZhuangTai"；理由：用户要求每条入库后回写“已入库”。
+  status_field: ZhuangTai
+  # 2026-06-13 17:18:04 新增：声明回写状态值；作用：写回已入库；理由：和截图目标一致。
+  synced_status_value: 已入库
+  # 2026-06-13 17:18:04 新增：排除状态字段参与 hash；作用：避免自己回写 ZhuangTai 后下一轮又触发同步；理由：状态回写不是业务内容变化。
+  state_hash_exclude_fields:
+    - ZhuangTai
+  # 2026-06-13 17:18:04 新增：声明回写开关；作用：允许按外部库权限关闭；理由：本库需要开启，但未来只读库可关。
+  write_back:
+    # 2026-06-13 17:18:04 新增：启用回写；作用：每条 point upsert 成功后写回 PG；理由：用户明确要求。
+    enabled: true
+    # 2026-06-13 17:18:04 新增：声明回写值；作用：与 synced_status_value 保持一致；理由：兼容未来 adapter 只读 write_back 小节。
+    status_value: 已入库
+
+# 2026-06-13 17:18:04 新增：声明外部库 Qdrant 输出形态；作用：生成 LlamaIndex hybrid collection；理由：外部 QdrantVectorStore 默认可用 dense+sparse。
+qdrant:
+  # 2026-06-13 17:18:04 新增：启用 hybrid；作用：创建 text-dense 和 text-sparse-new；理由：外部检索兼容 LlamaIndex 官方参数。
+  vector_mode: hybrid
+  # 2026-06-13 17:18:04 新增：声明 dense 向量名；作用：对齐 LlamaIndex 默认；理由：外部消费者按 text-dense 查询。
+  dense_vector_name: text-dense
+  # 2026-06-13 17:18:04 新增：声明 sparse 向量名；作用：对齐 LlamaIndex 默认；理由：外部消费者按 text-sparse-new 查询。
+  sparse_vector_name: text-sparse-new
+  # 2026-06-13 17:18:04 新增：声明 sparse 模型；作用：文档侧 sparse 用 Qdrant/bm25；理由：和外部 fastembed_sparse_model 对齐。
+  fastembed_sparse_model: Qdrant/bm25
+
+# 2026-06-13 17:18:04 新增：声明主键字段；作用：用 wdjl_id 生成 source_pk 和稳定 point id；理由：截图表主键是 wdjl_id。
+id_field: wdjl_id
+# 2026-06-13 17:18:04 新增：声明泛化契约；作用：允许只用 MiaoShu 向量化，不要求答案进入 retrieval_text；理由：krauss 表不是固定 QA 模板。
+contract_mode: generic
+
+# 2026-06-13 17:18:04 新增：声明读取字段；作用：PG adapter 只 SELECT YAML 声明字段；理由：字段选择配置化，避免程序写死。
+select:
+  # 2026-06-13 17:18:04 新增：列出截图表字段；作用：读取向量字段、业务 payload 字段和同步状态字段；理由：后续 payload/hash/回写都依赖这些字段。
+  fields:
+    - wdjl_id
+    - WenTi
+    - DaAn
+    - WenTiYuanWen
+    - DaAnYuanWen
+    - WenTi_2
+    - DaAn_2
+    - MiaoShu
+    - ZhuangTai
+    - ShenHeRen
+    - DiZhi
+    - ShiJian
+    - LeIXing
+    - ShenHeTime
+    - XiuGaiYuanYin
+    - gsId
+    - del_flag
+    - del_time
+    - in_userid
+    - in_time
+    - up_userid
+    - up_time
+
+# 2026-06-13 17:18:04 新增：声明向量化字段；作用：只把 MiaoShu 送进 embedding；理由：用户指定只向量化 MiaoShu。
+embedding:
+  # 2026-06-13 17:18:04 新增：只选择 MiaoShu；作用：避免其他字段污染召回；理由：截图目标明确。
+  fields:
+    - MiaoShu
+  # 2026-06-13 17:18:04 新增：声明拼接符；作用：保持通用多字段格式；理由：未来其他库可多字段向量化。
+  joiner: "\n"
+
+# 2026-06-13 17:18:04 新增：声明 prompt 正文；作用：满足 generic 校验且不进入最终 Qdrant 顶层；理由：现有写入链路需要 prompt_text 可用。
+prompt_text:
+  # 2026-06-13 17:18:04 新增：使用 MiaoShu 作为 prompt 文本；作用：保持正文与向量文本一致；理由：该库当前只要求描述字段入库。
+  fields:
+    - MiaoShu
+  # 2026-06-13 17:18:04 新增：声明拼接符；作用：保持格式稳定；理由：未来可扩展多字段 prompt。
+  joiner: "\n"
+
+# 2026-06-13 17:18:04 新增：声明业务 payload 字段；作用：除 MiaoShu 外的其他字段打包保留；理由：用户要求其他字段数据 payload 打包。
+payload:
+  # 2026-06-13 17:18:04 新增：不包含 MiaoShu；作用：避免向量化字段重复进入嵌套 payload；理由：最终顶层 retrieval_text 已保存 MiaoShu。
+  include:
+    - wdjl_id
+    - WenTi
+    - DaAn
+    - WenTiYuanWen
+    - DaAnYuanWen
+    - WenTi_2
+    - DaAn_2
+    - ZhuangTai
+    - ShenHeRen
+    - DiZhi
+    - ShiJian
+    - LeIXing
+    - ShenHeTime
+    - XiuGaiYuanYin
+    - gsId
+    - del_flag
+    - del_time
+    - in_userid
+    - in_time
+    - up_userid
+    - up_time
+
+# 2026-06-13 17:18:04 新增：清空 keyword 索引；作用：不自动生成无关顶层字段；理由：最终 Qdrant 结构由 qdrant_payload.indexes 控制。
+keyword_index:
+  # 2026-06-13 17:18:04 新增：不声明 keyword 字段；作用：避免无用索引；理由：当前目标只要求 retrieval_text 和 payload。
+  fields: []
+
+# 2026-06-13 17:18:04 新增：声明全文索引；作用：只给 retrieval_text 建 TEXT index；理由：截图要求不混入其他无用字段。
+text_index:
+  # 2026-06-13 17:18:04 新增：保留 retrieval_text 索引；作用：方便 Qdrant WebUI 和调试；理由：这是向量化内容可见入口。
+  fields:
+    - retrieval_text
+
+# 2026-06-13 17:18:04 新增：声明最终 Qdrant payload 布局；作用：顶层只保留 retrieval_text 和 payload；理由：隔离外部库字段，避免混入 getai/其他库字段。
+qdrant_payload:
+  # 2026-06-13 17:18:04 新增：禁止额外顶层字段；作用：拦截 doc_id/text/source_* 等自动字段；理由：Qdrant 顶层必须完全由 YAML 控制。
+  deny_extra_top_level: true
+  # 2026-06-13 17:18:04 新增：声明顶层字段；作用：只暴露 MiaoShu 形成的 retrieval_text；理由：向量化内容要可核对。
+  top_level:
+    - key: retrieval_text
+      from: embedding_text
+  # 2026-06-13 17:18:04 新增：声明嵌套对象；作用：把非向量字段放进 payload；理由：业务字段不能摊平成 Qdrant 顶层。
+  objects:
+    payload:
+      # 2026-06-13 17:18:04 新增：payload include 与 payload.include 保持一致；作用：最终 point 只保存这些业务字段；理由：一库一结构由 YAML 明确。
+      include:
+        - wdjl_id
+        - WenTi
+        - DaAn
+        - WenTiYuanWen
+        - DaAnYuanWen
+        - WenTi_2
+        - DaAn_2
+        - ZhuangTai
+        - ShenHeRen
+        - DiZhi
+        - ShiJian
+        - LeIXing
+        - ShenHeTime
+        - XiuGaiYuanYin
+        - gsId
+        - del_flag
+        - del_time
+        - in_userid
+        - in_time
+        - up_userid
+        - up_time
+  # 2026-06-13 17:18:04 新增：声明 payload 索引；作用：索引也跟随 YAML；理由：不自动残留 doc_id/source_pk/keyword_terms。
+  indexes:
+    # 2026-06-13 17:18:04 新增：无 keyword 索引；作用：保持 collection 干净；理由：当前需求不需要过滤索引。
+    keyword: []
+    # 2026-06-13 17:18:04 新增：只给 retrieval_text 建 TEXT index；作用：核对和全文调试；理由：这是唯一顶层文本字段。
+    text:
+      - retrieval_text

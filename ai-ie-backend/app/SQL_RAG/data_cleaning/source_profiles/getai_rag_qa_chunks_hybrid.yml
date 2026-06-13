@@ -1,0 +1,104 @@
+# 2026-06-12 09:52:34 修改：定义 getai hybrid 影子 profile；作用：给外部消费者生成独立 hybrid collection；理由：不能把主 agent 使用的 sql_rag_qa_chunks_v1 原地改结构。
+profile_name: getai_rag_qa_chunks_hybrid
+# 2026-06-12 09:52:34 修改：标记来源名；作用：Qdrant payload 可追溯 getai 数据源；理由：影子 collection 仍来自同一业务库。
+source_name: getai
+# 2026-06-12 09:52:34 修改：标记来源表；作用：支持回表定位 SQL Server 原始 chunk；理由：影子 collection 不能丢失原表来源。
+source_table: dbo.rag_qa_chunks
+# 2026-06-12 09:52:34 修改：指定影子 collection；作用：让别人消费 hybrid 时走 sql_rag_qa_chunks_v1_hybrid；理由：不影响当前 agent 的 sql_rag_qa_chunks_v1。
+target_collection: sql_rag_qa_chunks_v1_hybrid
+# 2026-06-12 14:40:11 修改：声明旧 QA payload 模式；作用：hybrid 影子库只改向量结构不改业务 payload；理由：getai 外部消费仍需要完整 QA metadata。
+payload_mode: legacy_qa
+# 2026-06-12 09:52:34 修改：声明影子 Qdrant 输出形态；作用：生成 LlamaIndex hybrid 兼容 collection；理由：别人 enable_hybrid=True 时需要 dense+sparse schema。
+qdrant:
+  # 2026-06-12 09:52:34 修改：启用 hybrid 模式；作用：创建 text-dense 和 text-sparse-new；理由：修复外部 QdrantVectorStore 全量参数检索报错。
+  vector_mode: hybrid
+  # 2026-06-12 09:52:34 修改：指定 dense 向量名；作用：对齐 LlamaIndex 默认 dense_vector_name；理由：别人默认查询 text-dense。
+  dense_vector_name: text-dense
+  # 2026-06-12 09:52:34 修改：指定 sparse 向量名；作用：对齐 LlamaIndex 默认 sparse_vector_name；理由：别人默认查询 text-sparse-new。
+  sparse_vector_name: text-sparse-new
+  # 2026-06-12 09:52:34 修改：指定 sparse 模型；作用：文档侧 sparse 使用 Qdrant/bm25；理由：匹配外部 fastembed_sparse_model="Qdrant/bm25"。
+  fastembed_sparse_model: Qdrant/bm25
+# 2026-06-12 09:52:34 修改：标记主键字段；作用：生成来源主键；理由：现有 chunk_id 是最稳定的 QA chunk 标识。
+id_field: chunk_id
+# 2026-06-12 09:52:34 修改：标记契约模式；作用：getai 继续使用严格 QA 校验；理由：影子库只改 Qdrant 向量结构，不放松业务质量门槛。
+contract_mode: qa
+# 2026-06-12 09:52:34 修改：声明向量化字段；作用：保持原 retrieval_text 向量化策略；理由：影子 collection 召回语义要和主 collection 一致。
+embedding:
+  # 2026-06-12 09:52:34 修改：只读取 retrieval_text；作用：与现有 build_embedding_text 优先逻辑一致；理由：避免改动召回排序语义。
+  fields:
+    - retrieval_text
+  # 2026-06-12 09:52:34 修改：声明拼接符；作用：兼容通用解析器；理由：保持 profile 结构一致。
+  joiner: "\n"
+# 2026-06-12 09:52:34 修改：声明 prompt 正文字段；作用：保持原 llm_text/text 消费策略；理由：外部消费者 prompt 应读取干净正文。
+prompt_text:
+  # 2026-06-12 09:52:34 修改：优先读取 llm_text；作用：保持答案优先正文；理由：getai QA 回答质量依赖完整答案。
+  fields:
+    - llm_text
+  # 2026-06-12 09:52:34 修改：声明拼接符；作用：兼容通用解析器；理由：不引入特殊分支。
+  joiner: "\n"
+# 2026-06-12 09:52:34 修改：声明保留 payload 字段；作用：影子库 payload 与主库保持一致；理由：只改变向量结构，不改变业务 metadata。
+payload:
+  # 2026-06-12 09:52:34 修改：列出当前 QA payload 核心字段；作用：保证外部消费者仍能看到完整 QA metadata；理由：影子 profile 不能丢字段。
+  include:
+    - chunk_id
+    - document_id
+    - audio_no
+    - audio_title
+    - chunk_index
+    - scene
+    - question
+    - answer
+    - canonical_question
+    - answer_text
+    - query_aliases
+    - cleaned_text
+    - resolution_steps
+    - keywords
+    - entities_json
+    - source_excerpt
+    - source_excerpt_full
+    - llm_text
+    - retrieval_text
+    - content_hash
+    - qa_pair_id
+    - qa_pair_index
+    - qa_similarity_score
+    - qa_similarity_threshold
+    - qa_pair_validated
+    - cluster_id
+    - cluster_label
+    - cluster_level
+    - cluster_path
+    - global_cluster_id
+    - global_cluster_label
+    - global_cluster_level
+    - global_cluster_path
+    - question_hash
+    - answer_hash
+    - canonical_chunk_id
+    - fusion_status
+    - payload_schema_version
+    - rag_contract_version
+    - qdrant_ready
+    - validation_flags
+# 2026-06-12 09:52:34 修改：声明关键词索引字段；作用：保留当前关键词过滤能力；理由：外部 LlamaIndex/Qdrant filter 仍需要这些字段。
+keyword_index:
+  # 2026-06-12 09:52:34 修改：列出 getai 需要建 KEYWORD index 的字段；作用：与主 profile 保持一致；理由：影子 collection 不降低过滤能力。
+  fields:
+    - doc_id
+    - document_id
+    - chunk_id
+    - scene
+    - keyword_terms
+    - query_aliases
+    - cluster_id
+    - global_cluster_id
+    - fusion_status
+    - payload_schema_version
+    - rag_contract_version
+# 2026-06-12 09:52:34 修改：声明全文索引字段；作用：保留 text/retrieval_text 的 Qdrant TEXT index；理由：兼容外部 UI 调试和全文过滤。
+text_index:
+  # 2026-06-12 09:52:34 修改：列出 TEXT index 字段；作用：不影响现有 text_key 消费；理由：LlamaIndex 默认可读取 text。
+  fields:
+    - text
+    - retrieval_text

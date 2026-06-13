@@ -1,0 +1,116 @@
+# 2026-06-11 15:54:56 修改：定义 External_database profile；作用：模拟外部库独立字段策略；理由：外部库不能被硬塞成 getai QA 模板。
+profile_name: external_database
+# 2026-06-11 15:54:56 修改：标记外部库来源名；作用：Qdrant payload 可区分外部库；理由：多数据源统一写入必须可追溯。
+source_name: External_database
+# 2026-06-11 15:54:56 修改：标记外部库来源表；作用：支持回表和 WebUI 排查；理由：外部库转 Qdrant 后仍要知道原表。
+source_table: dbo.external_qa_samples
+# 2026-06-11 15:54:56 修改：标记目标 collection；作用：外部库写入独立 Qdrant collection；理由：不污染主 agent 的 sql_rag_qa_chunks_v1。
+target_collection: sql_External_database
+# 2026-06-12 15:30:17 修改：启用 YAML 渲染 payload；作用：Qdrant 顶层字段、嵌套对象和索引全部由 qdrant_payload 声明；理由：外部库字段形态千变万化，程序不能为每个库新增分支。
+payload_mode: profile_rendered
+# 2026-06-12 09:52:34 修改：声明外部库 Qdrant 输出形态；作用：让 External_database 默认生成 LlamaIndex hybrid collection；理由：别人开启 enable_hybrid=True 时必须能找到 dense+sparse。
+qdrant:
+  # 2026-06-12 09:52:34 修改：启用 hybrid 模式；作用：创建 text-dense 和 text-sparse-new；理由：修复外部 QdrantVectorStore 全量参数检索报错。
+  vector_mode: hybrid
+  # 2026-06-12 09:52:34 修改：指定 dense 向量名；作用：对齐 LlamaIndex QdrantVectorStore 默认 dense_vector_name；理由：别人默认查询 text-dense。
+  dense_vector_name: text-dense
+  # 2026-06-12 09:52:34 修改：指定 sparse 向量名；作用：对齐 LlamaIndex QdrantVectorStore 默认 sparse_vector_name；理由：别人默认查询 text-sparse-new。
+  sparse_vector_name: text-sparse-new
+  # 2026-06-12 09:52:34 修改：指定 sparse 模型；作用：文档侧 sparse 使用 Qdrant/bm25；理由：匹配外部 fastembed_sparse_model="Qdrant/bm25"。
+  fastembed_sparse_model: Qdrant/bm25
+# 2026-06-11 15:54:56 修改：指定外部主键字段；作用：生成 source_pk 和稳定 point id；理由：外部库原始行必须可回溯。
+id_field: external_id
+# 2026-06-11 15:54:56 修改：标记泛化契约模式；作用：允许 embedding_text 不包含答案；理由：外部库可能只用问题字段做召回。
+contract_mode: generic
+# 2026-06-11 15:54:56 修改：声明 SQL 读取字段；作用：外部 adapter 按配置生成 SELECT；理由：不同外部表字段不应写死在 Python 里。
+select:
+  # 2026-06-11 15:54:56 修改：列出截图要求字段；作用：保证样例库表字段全量读取；理由：字段选择由 profile 决定。
+  fields:
+    # 2026-06-12 14:40:11 修改：读取普通序号 id；作用：参与 standard_question + id 向量化；理由：用户要求关系库新增 id 并给三条数据编号。
+    - id
+    - external_id
+    - question
+    - question_scene
+    - answer
+    - standard_question
+    - answer_completeness
+    - customer_text
+    - service_text
+    - created_at
+    - updated_at
+# 2026-06-12 14:40:11 修改：声明向量化字段；作用：只用 standard_question + id 生成 embedding；理由：满足用户要求的外部库标准问题加序号召回。
+embedding:
+  # 2026-06-12 14:40:11 修改：指定标准问题和普通序号字段；作用：避免 question/answer/evidence 干扰召回但保留序号区分；理由：id 参与向量化但不是 point 身份。
+  fields:
+    - standard_question
+    - id
+  # 2026-06-11 15:54:56 修改：声明拼接符；作用：兼容多个向量字段的外部库；理由：保持通用配置格式。
+  joiner: "\n"
+# 2026-06-11 15:54:56 修改：声明 prompt 正文字段；作用：模型消费时仍能看到标准问题和答案；理由：只用问题向量化不代表丢答案。
+prompt_text:
+  # 2026-06-11 15:54:56 修改：声明 prompt 依赖字段；作用：模板渲染时做缺字段校验；理由：外部库 prompt 字段必须可控。
+  fields:
+    - standard_question
+    - answer
+  # 2026-06-11 15:54:56 修改：声明 prompt 模板；作用：提供干净的 LlamaIndex text 正文；理由：避免把全量 payload 原样喂给模型。
+  template: |
+    问题：{standard_question}
+    答案：{answer}
+# 2026-06-11 15:54:56 修改：声明 payload 保留字段；作用：除向量正文外的业务字段仍可展示、过滤、回表；理由：字段不进 embedding 不代表丢弃。
+payload:
+  # 2026-06-11 15:54:56 修改：列出外部库 payload 字段；作用：按业务保留截图字段；理由：不同外部库可以独立配置。
+  include:
+    # 2026-06-12 14:40:11 修改：保留普通序号 id；作用：WebUI 和回表能看到向量化所用序号；理由：除 text/retrieval_text 外业务字段都打包进 payload。
+    - id
+    - external_id
+    - question
+    - question_scene
+    - answer
+    - standard_question
+    - answer_completeness
+    - customer_text
+    - service_text
+    - created_at
+    - updated_at
+# 2026-06-11 15:54:56 修改：声明关键词索引字段；作用：Qdrant WebUI 和外部 filter 可见；理由：字段索引也要由 profile 决定。
+keyword_index:
+  # 2026-06-12 15:30:17 修改：清空旧 keyword_index 字段；作用：当前 profile_rendered 外部库不再生成 keyword_terms；理由：最终 Qdrant 字段和索引全部交给 qdrant_payload 控制。
+  fields: []
+# 2026-06-11 15:54:56 修改：声明全文索引字段；作用：支持 WebUI 全文过滤和调试；理由：text/retrieval_text 仍是统一最小消费契约。
+text_index:
+  # 2026-06-11 15:54:56 修改：列出 TEXT index 字段；作用：兼容 LlamaIndex 默认 text_key 与检索文本调试；理由：外部 RAG 可以安全读取 text。
+  fields:
+    - retrieval_text
+# 2026-06-12 15:30:17 修改：声明最终 Qdrant payload 布局；作用：只存当前外部库需要的顶层字段和打包对象；理由：sql_External_database 不应混入 doc_id/text/source_* 等其他库字段。
+qdrant_payload:
+  # 2026-06-12 15:30:17 修改：禁止自动追加未声明顶层字段；作用：拦截 doc_id/text/source_name/source_table/source_pk/keyword_terms/mapping_profile_name；理由：字段隔离必须由 YAML 明确控制。
+  deny_extra_top_level: true
+  # 2026-06-12 15:30:17 修改：声明顶层字段；作用：只暴露当前库需要人工核对和检索调试的向量文本；理由：其他业务字段全部进入 payload 对象。
+  top_level:
+    # 2026-06-12 15:30:17 修改：把 retrieval_text 映射为 embedding_text；作用：保存 standard_question + id 的实际向量化内容；理由：用户要求 Qdrant 能直接看到向量化字段。
+    - key: retrieval_text
+      from: embedding_text
+  # 2026-06-12 15:30:17 修改：声明嵌套对象；作用：把业务字段打包到 payload；理由：避免业务字段摊平成 Qdrant 顶层。
+  objects:
+    # 2026-06-12 15:30:17 修改：声明 payload 对象；作用：承载外部库原始业务字段；理由：当前截图要求其他字段打包而不是顶层展示。
+    payload:
+      # 2026-06-12 15:30:17 修改：声明 payload include 字段；作用：决定 payload 内保存哪些业务字段；理由：未来外部库只改自己的 YAML。
+      include:
+        - id
+        - external_id
+        - question
+        - question_scene
+        - answer
+        - standard_question
+        - answer_completeness
+        - customer_text
+        - service_text
+        - created_at
+        - updated_at
+  # 2026-06-12 15:30:17 修改：声明 payload 索引；作用：索引也由 YAML 控制；理由：没有声明的 doc_id/source_* / keyword_terms 不能残留在 collection。
+  indexes:
+    # 2026-06-12 15:30:17 修改：当前外部库不建 keyword 索引；作用：避免生成无用 keyword_terms 和 payload.* 索引；理由：截图目标只要求向量文本和打包 payload。
+    keyword: []
+    # 2026-06-12 15:30:17 修改：只给 retrieval_text 建 TEXT 索引；作用：方便 WebUI/调试核对向量化文本；理由：这是 YAML 声明的唯一顶层文本字段。
+    text:
+      - retrieval_text

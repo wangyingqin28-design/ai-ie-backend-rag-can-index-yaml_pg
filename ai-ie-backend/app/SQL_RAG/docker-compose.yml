@@ -1,0 +1,181 @@
+volumes:
+  sql-rag-mssql-data: {}
+  sql-rag-qdrant-data: {}
+  sql-rag-qdrant-snapshots: {}
+  # 2026-06-11 19:42:30 新增原因：为模拟外部库 External_database 单独持久化 SQL Server 数据，避免污染原 getai。
+  sql-rag-external-mssql-data: {}
+  # 2026-06-11 19:42:30 新增原因：为 sql_External_database 单独持久化 Qdrant 数据，避免和 sql_rag_qa_chunks_v1 冲突。
+  sql-rag-external-qdrant-data: {}
+  # 2026-06-11 19:42:30 新增原因：为外部库 Qdrant 单独保存快照，便于独立备份和回滚。
+  sql-rag-external-qdrant-snapshots: {}
+  # 2026-06-04 16:33:54 新增原因：持久化 Neo4j 多跳三元组图谱数据。
+  sql-rag-neo4j-data: {}
+  # 2026-06-04 16:33:54 新增原因：持久化 Neo4j 日志，便于排查图谱写入问题。
+  sql-rag-neo4j-logs: {}
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql-rag-sqlserver-2022
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-SqlRag@2026!}"
+    ports:
+      - "${MSSQL_PORT:-1433}:1433"
+    volumes:
+      - sql-rag-mssql-data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "(/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\") >/dev/null 2>&1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  init-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql-rag-sqlserver-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-SqlRag@2026!}"
+      APP_DB_NAME: "${APP_DB_NAME:-getai}"
+      APP_DB_USER: "${APP_DB_USER:-dev}"
+      APP_DB_PASSWORD: "${APP_DB_PASSWORD:-123456}"
+    volumes:
+      - ./init:/init:ro
+    command:
+      - /bin/bash
+      - /init/init-db.sh
+    restart: "no"
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.5
+    container_name: sql-rag-qdrant
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - sql-rag-qdrant-data:/qdrant/storage
+      - sql-rag-qdrant-snapshots:/qdrant/snapshots
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 6333 || timeout 3 bash -c '</dev/tcp/localhost/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  # 2026-06-11 19:42:30 新增原因：模拟别人外部关系型库，端口固定走 14333，不占用原 getai 的 1433。
+  external-sqlserver:
+    # 2026-06-11 19:42:30 新增原因：复用 SQL Server 2022 镜像，保证外部库类型和当前链路一致。
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # 2026-06-11 19:42:30 新增原因：固定容器名，便于外部库初始化脚本和验收命令定位。
+    container_name: sql-rag-external-sqlserver-2022
+    # 2026-06-11 19:42:30 新增原因：把外部库 SA 密码和原库 SA 密码拆开，避免误连误改。
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "${EXTERNAL_MSSQL_SA_PASSWORD:-SqlRagExternal@2026!}"
+    # 2026-06-11 19:42:30 新增原因：宿主机暴露 14333，给 External_database 转 Qdrant 脚本独立连接。
+    ports:
+      - "${EXTERNAL_MSSQL_PORT:-14333}:1433"
+    # 2026-06-11 19:42:30 新增原因：使用外部库独立数据卷，防止覆盖原 SQL Server 数据。
+    volumes:
+      - sql-rag-external-mssql-data:/var/opt/mssql
+    # 2026-06-11 19:42:30 新增原因：等待 SQL Server 可登录后再初始化 External_database。
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "(/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\") >/dev/null 2>&1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    # 2026-06-11 19:42:30 新增原因：本地 Docker 重启后保持外部库服务可用。
+    restart: unless-stopped
+
+  # 2026-06-11 19:42:30 新增原因：初始化 External_database、截图字段表和三条模拟外部 QA 数据。
+  init-external-db:
+    # 2026-06-11 19:42:30 新增原因：使用 SQL Server 官方镜像内置 sqlcmd 执行初始化 SQL。
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # 2026-06-11 19:42:30 新增原因：固定初始化容器名，便于查看日志确认三条数据写入。
+    container_name: sql-rag-external-sqlserver-init
+    # 2026-06-11 19:42:30 新增原因：必须等外部 SQL Server healthy 后才能建库建表。
+    depends_on:
+      external-sqlserver:
+        condition: service_healthy
+    # 2026-06-11 19:42:30 新增原因：把外部库名、用户和密码参数化，默认值和 adapter 保持一致。
+    environment:
+      EXTERNAL_MSSQL_SA_PASSWORD: "${EXTERNAL_MSSQL_SA_PASSWORD:-SqlRagExternal@2026!}"
+      EXTERNAL_DB_NAME: "${EXTERNAL_DB_NAME:-External_database}"
+      EXTERNAL_DB_USER: "${EXTERNAL_DB_USER:-dev}"
+      EXTERNAL_DB_PASSWORD: "${EXTERNAL_DB_PASSWORD:-123456}"
+    # 2026-06-11 19:42:30 新增原因：只读挂载 init 目录，确保初始化脚本来自仓库受控文件。
+    volumes:
+      - ./init:/init:ro
+    # 2026-06-11 19:42:30 新增原因：调用外部库专用初始化入口，不复用 getai init-db.sh。
+    command:
+      - /bin/bash
+      - /init/init-external-db.sh
+    # 2026-06-11 19:42:30 新增原因：初始化是一次性任务，成功后不循环重启。
+    restart: "no"
+
+  # 2026-06-11 19:42:30 新增原因：提供外部库专用 Qdrant，目标 collection 为 sql_External_database。
+  external-qdrant:
+    # 2026-06-11 19:42:30 新增原因：版本和原 Qdrant 保持一致，排除版本差异导致的检索行为变化。
+    image: qdrant/qdrant:v1.15.5
+    # 2026-06-11 19:42:30 新增原因：固定容器名，便于 Qdrant WebUI 和验收脚本定位。
+    container_name: sql-rag-external-qdrant
+    # 2026-06-11 19:42:30 新增原因：宿主机暴露 6334，和原 sql_rag_qa_chunks_v1 的 6333 完全隔离。
+    ports:
+      - "${EXTERNAL_QDRANT_PORT:-6334}:6333"
+    # 2026-06-11 19:42:30 新增原因：外部库向量数据和快照分别落独立卷。
+    volumes:
+      - sql-rag-external-qdrant-data:/qdrant/storage
+      - sql-rag-external-qdrant-snapshots:/qdrant/snapshots
+    # 2026-06-11 19:42:30 新增原因：启动后用 TCP 探活，确保转 Qdrant 脚本能写入。
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 6333 || timeout 3 bash -c '</dev/tcp/localhost/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    # 2026-06-11 19:42:30 新增原因：本地 Docker 重启后保持外部向量库可用。
+    restart: unless-stopped
+
+  # 2026-06-04 16:33:54 新增原因：提供真实 Neo4j 多跳三元组图谱后端，避免图谱只停留在 SQL mention 表。
+  neo4j:
+    # 2026-06-04 16:33:54 新增原因：使用 Neo4j 5 LTS 系列兼容 Python neo4j 5.x 驱动。
+    image: neo4j:5.26-community
+    # 2026-06-04 16:33:54 新增原因：固定容器名，便于本地健康检查和重启。
+    container_name: sql-rag-neo4j
+    # 2026-06-04 16:33:54 新增原因：配置默认认证，和 SQL_RAG/.env 保持一致。
+    environment:
+      NEO4J_AUTH: "${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-SqlRagNeo4j@2026}"
+      NEO4J_server_memory_heap_initial__size: "512m"
+      NEO4J_server_memory_heap_max__size: "1g"
+    # 2026-06-04 16:33:54 新增原因：暴露浏览器控制台和 Bolt 端口。
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BOLT_PORT:-7687}:7687"
+    # 2026-06-04 16:33:54 新增原因：挂载图谱数据和日志卷。
+    volumes:
+      - sql-rag-neo4j-data:/data
+      - sql-rag-neo4j-logs:/logs
+    # 2026-06-04 16:33:54 新增原因：用 cypher-shell 验证 Neo4j 可用后再让业务脑健康检查通过。
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u \"$${NEO4J_AUTH%%/*}\" -p \"$${NEO4J_AUTH#*/}\" 'RETURN 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    # 2026-06-04 16:33:54 新增原因：本地开发环境异常退出后自动恢复图谱服务。
+    restart: unless-stopped
