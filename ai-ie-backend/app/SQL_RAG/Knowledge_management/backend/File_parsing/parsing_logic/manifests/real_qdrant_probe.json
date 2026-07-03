@@ -1,0 +1,11 @@
+{
+  "tested_at": "2026-07-03T14:57:39+08:00",
+  "endpoint_host": "yulith",
+  "endpoint_port": 6333,
+  "dns_resolved": true,
+  "resolved_address": "172.18.1.184",
+  "tcp_connected": false,
+  "connected": false,
+  "collection_count": null,
+  "exception_type": "ConnectionRefusedError"
+}

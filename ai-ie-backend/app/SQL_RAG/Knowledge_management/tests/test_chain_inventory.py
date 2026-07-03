@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+import subprocess
+import os
 from pathlib import Path
 
 
@@ -11,6 +13,9 @@ if str(KNOWLEDGE_ROOT) not in sys.path:
     sys.path.insert(0, str(KNOWLEDGE_ROOT))
 
 from tools.chain_inventory import collect_definitions, collect_module_closure
+
+
+BUILDER = KNOWLEDGE_ROOT / "tools/build_chain_mirrors.py"
 
 
 def _write(path: Path, content: str) -> None:
@@ -51,3 +56,20 @@ def test_collect_definitions_qualifies_class_methods(tmp_path: Path) -> None:
         ("Worker.run", "def"),
         ("dispatch", "async def"),
     }
+
+
+def test_builder_script_starts_when_invoked_by_file_path(tmp_path: Path) -> None:
+    environment = os.environ.copy()
+    environment["PYTHONIOENCODING"] = "utf-8"
+    completed = subprocess.run(
+        [sys.executable, str(BUILDER)],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr

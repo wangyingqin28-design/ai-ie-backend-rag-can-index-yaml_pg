@@ -1,0 +1,41 @@
+{
+  "started_at": "2026-07-03T14:57:41+08:00",
+  "status": "passed",
+  "target_runtime": "D:\\wkt\\ai-ie-backend-feature-rag-new (1)\\ai-ie-backend\\app\\SQL_RAG\\Knowledge_management\\backend\\Extracting_parsed_content_based_on_relevant_prompts\\Extraction_of_file_related_prompts\\runtime",
+  "model": "deepseek-ai/DeepSeek-V4-Pro",
+  "api_endpoint_host": "api.siliconflow.cn",
+  "database_host": "krauss",
+  "api_key_present": true,
+  "marker": "codex-live-31cd2fe4f5d6",
+  "generated_ids": {
+    "raw_data_id": "019f26c4d6aa7861a9a2eb41456f16e9",
+    "qa_pair_ids": [
+      "019f26c52fe57eeaa181c857f01a4771"
+    ],
+    "intent_ids": [
+      "019f26c52ff075bd9f1d7f85061c31e6"
+    ]
+  },
+  "row_counts": {
+    "AI_YuanShishuju": 1,
+    "AI_Wendajilu": 1,
+    "AI_Yitu": 1
+  },
+  "field_presence": {
+    "AI_WenTi": true,
+    "AI_DaAn": true,
+    "AI_Biaozhu": true,
+    "WenTiYuanWen": true,
+    "DaAnYuanWen": true,
+    "WenTi_true": true,
+    "DaAn_true": true,
+    "Biaozhu_true": true
+  },
+  "cleanup_counts": {
+    "AI_Wendajilu": 1,
+    "AI_Yitu": 1,
+    "AI_YuanShishuju": 1,
+    "remaining_rows": 0
+  },
+  "finished_at": "2026-07-03T14:58:04+08:00"
+}

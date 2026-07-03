@@ -1,0 +1,27 @@
+{
+  "chain": "文件解析链",
+  "generated_at": "2026-07-03 14:26:27",
+  "ordered_calls": [
+    "app.ai.processors.processor.process_file",
+    "app.ai.processors.file_utils.validate_file",
+    "app.ai.processors.file_utils.get_file_type",
+    "app.ai.processors.document_service.process_text_file",
+    "app.ai.processors.processor.to_index_item",
+    "app.ai.processors.processor.process_folder",
+    "app.ai.processors.file_utils.get_supported_files",
+    "app.ai.processors.processor.process_file",
+    "app.ai.processors.file_utils.validate_file",
+    "app.ai.processors.file_utils.get_file_type",
+    "app.ai.processors.document_service.process_text_file"
+  ],
+  "required_calls": [
+    "app.ai.processors.document_service.process_text_file",
+    "app.ai.processors.file_utils.get_file_type",
+    "app.ai.processors.file_utils.get_supported_files",
+    "app.ai.processors.file_utils.validate_file",
+    "app.ai.processors.processor.process_file",
+    "app.ai.processors.processor.process_folder",
+    "app.ai.processors.processor.to_index_item"
+  ],
+  "missing_required_calls": []
+}
