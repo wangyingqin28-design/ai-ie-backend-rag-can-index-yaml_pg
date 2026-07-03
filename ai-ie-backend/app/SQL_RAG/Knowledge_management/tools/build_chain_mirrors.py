@@ -6,6 +6,8 @@ import ast
 import hashlib
 import io
 import json
+import os
+import re
 import shutil
 import sys
 import tokenize
@@ -62,6 +64,10 @@ IMPORT_REWRITES = {
 def _generated_at() -> str:
     """复用首次重构时间，使重复构建不会制造无意义的全文件差异。"""
 
+    override = os.environ.get("KNOWLEDGE_CHAIN_GENERATED_AT", "").strip()
+    if override:
+        datetime.strptime(override, "%Y-%m-%d %H:%M:%S")
+        return override
     if GENERATED_AT_FILE.is_file():
         return GENERATED_AT_FILE.read_text(encoding="utf-8").strip()
     return datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
@@ -222,43 +228,130 @@ def _line_scope(
     return qualname, kind
 
 
-def _line_purpose(code: str) -> str:
-    """依据代码形态生成具体且稳定的中文作用说明。"""
+def _assignment_spans(source: str) -> list[tuple[int, int, str, str]]:
+    """收集赋值语句区间，供续行注释准确指出正在构造的目标。"""
+
+    tree = ast.parse(source)
+    spans: list[tuple[int, int, str, str]] = []
+    for node in ast.walk(tree):
+        target: ast.AST | None = None
+        value: ast.AST | None = None
+        if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            target = node.targets[0] if isinstance(node, ast.Assign) else node.target
+            value = node.value
+        if target is None:
+            continue
+        target_name = ast.unparse(target)
+        value_kind = ""
+        if isinstance(value, ast.Call):
+            value_kind = ast.unparse(value.func)
+        spans.append(
+            (
+                node.lineno,
+                node.end_lineno or node.lineno,
+                target_name,
+                value_kind,
+            )
+        )
+    return spans
+
+
+def _line_assignment(
+    line_number: int,
+    spans: list[tuple[int, int, str, str]],
+) -> tuple[str, str] | None:
+    """返回覆盖当前物理行且范围最小的赋值目标。"""
+
+    candidates = [span for span in spans if span[0] <= line_number <= span[1]]
+    if not candidates:
+        return None
+    start, end, target, value_kind = min(
+        candidates,
+        key=lambda item: item[1] - item[0],
+    )
+    return target, value_kind
+
+
+def _compact_code(code: str, limit: int = 96) -> str:
+    """压缩代码片段，令说明具体但不过度拉长编辑器行宽。"""
+
+    compact = " ".join(code.strip().split())
+    if len(compact) <= limit:
+        return compact
+    return compact[: limit - 1] + "…"
+
+
+def _line_purpose(
+    code: str,
+    *,
+    scope: tuple[str, str] | None,
+    assignment: tuple[str, str] | None,
+) -> str:
+    """依据代码形态、定义作用域和赋值目标生成一对一中文说明。"""
 
     stripped = code.strip()
-    if not stripped:
-        return "分隔相邻逻辑块"
-    if stripped.startswith("#"):
-        return "保留原实现注释并说明约束"
+    compact = _compact_code(code)
+    scope_name = scope[0] if scope else "模块级初始化"
     if stripped.startswith(("from ", "import ")):
-        return "导入本节点运行所需依赖"
+        return f"导入依赖 `{compact}`，供 {scope_name} 使用"
     if stripped.startswith("@"):
-        return "为下方定义注册装饰器行为"
-    if stripped.startswith("class "):
-        return "定义封装数据或行为的类"
-    if stripped.startswith("async def "):
-        return "定义可等待的异步处理节点"
-    if stripped.startswith("def "):
-        return "定义可复用的同步处理节点"
+        return f"应用装饰器 `{compact}`，配置紧随其后的定义"
+    definition = re.match(
+        r"(?:async\s+def|def|class)\s+([A-Za-z_]\w*)",
+        stripped,
+    )
+    if definition:
+        name = definition.group(1)
+        if stripped.startswith("class "):
+            return f"声明类 {name}，封装该节点的数据结构与行为"
+        if stripped.startswith("async def "):
+            return f"声明异步函数 {name}，提供可等待的链路处理入口"
+        return f"声明同步函数 {name}，封装可复用的处理步骤"
+    if assignment:
+        target, value_kind = assignment
+        if target == "__tablename__":
+            return f"为 __tablename__ 指定 ORM 对应数据库表；本行设置 `{compact}`"
+        if target == "__table_args__":
+            return f"为 __table_args__ 配置 ORM 表级主键、索引或约束；本行设置 `{compact}`"
+        if "mapped_column" in value_kind:
+            return f"定义 ORM 字段 {target} 的数据库列类型和约束；本行设置 `{compact}`"
+        return f"为 {target} 构造并保存赋值结果；本行执行 `{compact}`"
     if stripped.startswith(("if ", "elif ", "else:")):
-        return "依据当前状态选择执行分支"
+        return f"在 {scope_name} 中按条件 `{compact}` 选择执行分支"
     if stripped.startswith(("for ", "while ")):
-        return "逐项处理集合或重复任务"
+        return f"在 {scope_name} 中通过 `{compact}` 迭代处理数据"
     if stripped.startswith(("try:", "except ", "finally:")):
-        return "控制异常处理和资源清理"
+        return f"在 {scope_name} 中用 `{compact}` 控制异常处理或资源清理"
     if stripped.startswith(("with ", "async with ")):
-        return "限定文件、会话或异步资源生命周期"
+        return f"在 {scope_name} 中用 `{compact}` 管理资源生命周期"
     if stripped.startswith("return"):
-        return "向调用方返回本节点结果"
+        return f"从 {scope_name} 返回表达式 `{compact}` 的结果"
     if stripped.startswith("raise "):
-        return "阻止无效状态继续传播"
+        return f"在 {scope_name} 抛出 `{compact}`，阻止无效状态继续传播"
     if "await " in stripped:
-        return "等待异步下游完成并接收结果"
-    if "=" in stripped and "==" not in stripped and "!=" not in stripped:
-        return "保存配置、参数或中间运行状态"
-    if stripped.endswith(("(", ",", "[", "{")):
-        return "继续构造多行调用或数据结构"
-    return "执行当前节点的数据处理或控制表达式"
+        return f"在 {scope_name} 等待异步代码 `{compact}` 完成"
+    if scope and stripped.endswith((",", ")", "->")):
+        return f"完善 {scope[1]} {scope_name} 的签名或多行表达式片段 `{compact}`"
+    return f"在 {scope_name} 中执行具体代码片段 `{compact}`"
+
+
+def _line_basis(
+    *,
+    module: str,
+    owner: str,
+    scope: tuple[str, str] | None,
+) -> str:
+    """说明该行迁移或保留在当前所有权目录的明确依据。"""
+
+    if owner == "公共程序层":
+        ownership = f"源模块 {module} 被两条执行链共同依赖，按去重方案归入公共程序层"
+    elif owner == "文件解析业务链":
+        ownership = f"模块 {module} 是文件解析链薄入口，按业务边界仅保留委托逻辑"
+    else:
+        ownership = f"源模块 {module} 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录"
+    if scope:
+        return f"{ownership}；本行位于{scope[1]} {scope[0]}"
+    return f"{ownership}；本行属于模块级初始化"
 
 
 def _annotate_source(
@@ -268,29 +361,34 @@ def _annotate_source(
     owner: str,
     generated_at: str,
 ) -> str:
-    """在每条原代码/原注释前直接插入时间、作用和理由依据。"""
+    """为每条实际代码生成且只生成一条紧邻的中文说明。"""
 
     normalized = _normalize_explicit_continuations(source, module)
     normalized = _normalize_multiline_strings(normalized, module)
     ast.parse(normalized, filename=module)
     spans = _definition_spans(normalized)
+    assignments = _assignment_spans(normalized)
     output: list[str] = []
 
     for line_number, line in enumerate(normalized.splitlines(), start=1):
+        if not line.strip():
+            continue
+        if line.lstrip().startswith("#"):
+            continue
         indent = line[: len(line) - len(line.lstrip())]
         scope = _line_scope(line_number, spans)
-        if scope:
-            qualname, kind = scope
-            basis = f"{owner}所有；本行属于{kind} {qualname}"
-        else:
-            basis = f"{owner}所有；本行属于模块 {module} 的模块级声明"
-        purpose = _line_purpose(line)
+        assignment = _line_assignment(line_number, assignments)
+        basis = _line_basis(module=module, owner=owner, scope=scope)
+        purpose = _line_purpose(
+            line,
+            scope=scope,
+            assignment=assignment,
+        )
         annotation = (
             f"{indent}# [{generated_at}] 作用：{purpose}；理由依据：{basis}"
         )
         output.append(annotation)
-        if line.strip():
-            output.append(line)
+        output.append(line)
 
     result = "\n".join(output) + "\n"
     ast.parse(result, filename=module)

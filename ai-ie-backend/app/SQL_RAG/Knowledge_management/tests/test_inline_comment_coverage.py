@@ -20,8 +20,14 @@ RUNTIME_ROOTS = (
     / "runtime",
 )
 ANNOTATION = re.compile(
-    r"^\s*# \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] "
-    r"作用：.+；理由依据：.+$"
+    r"^\s*# \[(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] "
+    r"作用：(?P<purpose>.+)；理由依据：(?P<basis>.+)$"
+)
+DEFINITION = re.compile(
+    r"^\s*(?:async\s+def|def|class)\s+(?P<name>[A-Za-z_]\w*)"
+)
+ASSIGNMENT = re.compile(
+    r"^\s*(?P<name>[A-Za-z_]\w*)\s*(?::[^=]+)?=(?!=)"
 )
 
 
@@ -34,22 +40,75 @@ def _runtime_python_files() -> list[Path]:
     ]
 
 
-def test_every_runtime_physical_line_has_inline_chinese_explanation() -> None:
-    """每一条代码或原注释前必须紧邻时间、作用和依据说明。"""
+def test_every_code_line_has_exactly_one_immediately_adjacent_explanation() -> None:
+    """每条代码前只能有一条说明，说明后不能再出现空白或其他注释。"""
 
     files = _runtime_python_files()
     assert files
-    missing: list[str] = []
+    failures: list[str] = []
 
     for path in files:
         lines = path.read_text(encoding="utf-8").splitlines()
         for index, line in enumerate(lines):
-            if not line.strip() or ANNOTATION.match(line):
+            annotation = ANNOTATION.match(line)
+            if annotation:
+                if index + 1 >= len(lines):
+                    failures.append(f"{path}:{index + 1}: 文件末尾孤立说明")
+                    continue
+                following = lines[index + 1]
+                if not following.strip() or following.lstrip().startswith("#"):
+                    failures.append(
+                        f"{path}:{index + 1}: 说明后没有立即对应代码"
+                    )
+                continue
+            if not line.strip():
+                failures.append(f"{path}:{index + 1}: 存在空白行")
+                continue
+            if line.lstrip().startswith("#"):
+                failures.append(f"{path}:{index + 1}: 存在独立原注释")
                 continue
             if index == 0 or not ANNOTATION.match(lines[index - 1]):
-                missing.append(f"{path}:{index + 1}: {line}")
+                failures.append(f"{path}:{index + 1}: 代码前缺少唯一说明")
 
-    assert missing == []
+    assert failures == []
+
+
+def test_explanation_names_the_definition_or_assignment_it_describes() -> None:
+    """关键声明的说明必须点名对应类、函数、变量或 ORM 字段。"""
+
+    failures: list[str] = []
+    for path in _runtime_python_files():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for index, code in enumerate(lines):
+            if index == 0 or code.lstrip().startswith("#"):
+                continue
+            annotation = ANNOTATION.match(lines[index - 1])
+            if not annotation:
+                continue
+            declared = DEFINITION.match(code) or ASSIGNMENT.match(code)
+            if declared and declared.group("name") not in annotation.group("purpose"):
+                failures.append(
+                    f"{path}:{index + 1}: 说明未点名 {declared.group('name')}"
+                )
+
+    assert failures == []
+
+
+def test_generated_explanations_do_not_copy_garbled_source_comments() -> None:
+    """生成说明只描述实际代码，不复制可能受加密或编码影响的原注释乱码。"""
+
+    failures: list[str] = []
+    for path in _runtime_python_files():
+        for index, line in enumerate(
+            path.read_text(encoding="utf-8").splitlines(),
+            start=1,
+        ):
+            if ANNOTATION.match(line) and (
+                "???" in line or "\ufffd" in line or "\x00" in line
+            ):
+                failures.append(f"{path}:{index}: 说明包含乱码")
+
+    assert failures == []
 
 
 def test_runtime_files_have_no_unannotatable_blank_or_multiline_string() -> None:

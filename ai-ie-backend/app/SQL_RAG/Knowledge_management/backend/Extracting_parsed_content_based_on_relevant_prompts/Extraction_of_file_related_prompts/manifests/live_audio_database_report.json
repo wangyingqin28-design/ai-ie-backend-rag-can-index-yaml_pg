@@ -1,17 +1,17 @@
 {
-  "started_at": "2026-07-03T16:52:38+08:00",
+  "started_at": "2026-07-03T18:13:58+08:00",
   "status": "passed",
   "source_audio": "C:\\Users\\DELL\\Documents\\WeChat Files\\wxid_ahul2j69cxzm22\\FileStorage\\File\\2025-12\\18859060061(18859060061)_20251217154314.mp3",
   "source_audio_bytes": 40704,
   "ffmpeg_executable": "C:\\Users\\DELL\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1.2-full_build-shared\\bin\\ffmpeg.EXE",
   "transcription_model": "FunAudioLLM/SenseVoiceSmall",
   "deepseek_model": "deepseek-ai/DeepSeek-V4-Pro",
-  "raw_data_id": "019f272e15757cab8380a09dfed5bba7",
+  "raw_data_id": "019f27788e56720d9d3375054e9f1468",
   "qa_pair_ids": [
-    "019f272eded570b08ae3db9a2065eee8"
+    "019f2778f4c97b788bb892426536baab"
   ],
   "intent_ids": [
-    "019f272edee371c89c03305e9c54358e"
+    "019f2778f4d5728a861c6db37461875d"
   ],
   "screenshot_field_presence": {
     "AI_WenTi": true,
@@ -31,5 +31,5 @@
     "AI_Wendajilu": 1,
     "AI_Yitu": 1
   },
-  "finished_at": "2026-07-03T16:53:31+08:00"
+  "finished_at": "2026-07-03T18:14:26+08:00"
 }

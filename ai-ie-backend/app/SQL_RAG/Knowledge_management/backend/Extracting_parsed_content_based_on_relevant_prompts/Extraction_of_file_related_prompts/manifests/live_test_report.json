@@ -1,19 +1,19 @@
 {
-  "started_at": "2026-07-03T16:53:31+08:00",
+  "started_at": "2026-07-03T18:14:26+08:00",
   "status": "passed",
   "target_runtime": "D:\\wkt\\ai-ie-backend-feature-rag-new (1)\\ai-ie-backend\\app\\SQL_RAG\\Knowledge_management\\backend\\Extracting_parsed_content_based_on_relevant_prompts\\Extraction_of_file_related_prompts\\runtime",
   "model": "deepseek-ai/DeepSeek-V4-Pro",
   "api_endpoint_host": "api.siliconflow.cn",
   "database_host": "krauss",
   "api_key_present": true,
-  "marker": "codex-live-af2ea6e06691",
+  "marker": "codex-live-cddddc287ba7",
   "generated_ids": {
-    "raw_data_id": "019f272edffc7777b6e78bdbb56501b5",
+    "raw_data_id": "019f2778f5c670bd9e56ff6aa4a1c5ca",
     "qa_pair_ids": [
-      "019f272f1f1974cd93c48ad26af51da3"
+      "019f27793a327d1cae8e4c4911db9515"
     ],
     "intent_ids": [
-      "019f272f1f27710c9bc5f41715974ca9"
+      "019f27793a3d742f87067807ccca2585"
     ]
   },
   "row_counts": {
@@ -37,5 +37,5 @@
     "AI_YuanShishuju": 1,
     "remaining_rows": 0
   },
-  "finished_at": "2026-07-03T16:53:47+08:00"
+  "finished_at": "2026-07-03T18:14:44+08:00"
 }

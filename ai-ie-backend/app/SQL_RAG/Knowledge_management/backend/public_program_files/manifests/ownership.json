@@ -13,7 +13,7 @@
   "file_parsing_business_modules": [
     "file_parsing_chain.entry"
   ],
-  "generated_at": "2026-07-03 16:33:01",
+  "generated_at": "2026-07-03 18:11:51",
   "public_modules": [
     "app.ai.llm.llm_client",
     "app.ai.processors.audio_long_service",

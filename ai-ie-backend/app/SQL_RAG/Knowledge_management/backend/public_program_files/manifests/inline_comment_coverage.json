@@ -1,5 +1,5 @@
 {
-  "code_or_original_comment_lines": 2493,
+  "code_or_original_comment_lines": 2251,
   "coverage_percent": 100.0,
   "files": {
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/__init__.py": {
@@ -8,49 +8,49 @@
       "physical_lines": 2
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/audio_knowledge_extract_service.py": {
-      "code_or_original_comment_lines": 107,
-      "inline_explanation_lines": 141,
-      "physical_lines": 248
+      "code_or_original_comment_lines": 80,
+      "inline_explanation_lines": 80,
+      "physical_lines": 160
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/erp_ai_models.py": {
-      "code_or_original_comment_lines": 219,
-      "inline_explanation_lines": 253,
-      "physical_lines": 472
+      "code_or_original_comment_lines": 217,
+      "inline_explanation_lines": 217,
+      "physical_lines": 434
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/intent_service.py": {
       "code_or_original_comment_lines": 97,
-      "inline_explanation_lines": 127,
-      "physical_lines": 224
+      "inline_explanation_lines": 97,
+      "physical_lines": 194
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/model_base.py": {
       "code_or_original_comment_lines": 3,
-      "inline_explanation_lines": 6,
-      "physical_lines": 9
+      "inline_explanation_lines": 3,
+      "physical_lines": 6
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/process_service.py": {
-      "code_or_original_comment_lines": 259,
-      "inline_explanation_lines": 315,
-      "physical_lines": 574
+      "code_or_original_comment_lines": 222,
+      "inline_explanation_lines": 222,
+      "physical_lines": 444
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/qa_pair_service.py": {
       "code_or_original_comment_lines": 107,
-      "inline_explanation_lines": 137,
-      "physical_lines": 244
+      "inline_explanation_lines": 107,
+      "physical_lines": 214
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/raw_data_service.py": {
       "code_or_original_comment_lines": 61,
-      "inline_explanation_lines": 74,
-      "physical_lines": 135
+      "inline_explanation_lines": 61,
+      "physical_lines": 122
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/snowflake_generator.py": {
-      "code_or_original_comment_lines": 92,
-      "inline_explanation_lines": 123,
-      "physical_lines": 215
+      "code_or_original_comment_lines": 77,
+      "inline_explanation_lines": 77,
+      "physical_lines": 154
     },
     "Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain/vlm_router.py": {
       "code_or_original_comment_lines": 26,
-      "inline_explanation_lines": 31,
-      "physical_lines": 57
+      "inline_explanation_lines": 26,
+      "physical_lines": 52
     },
     "File_parsing/parsing_logic/runtime/file_parsing_chain/__init__.py": {
       "code_or_original_comment_lines": 1,
@@ -59,8 +59,8 @@
     },
     "File_parsing/parsing_logic/runtime/file_parsing_chain/entry.py": {
       "code_or_original_comment_lines": 45,
-      "inline_explanation_lines": 50,
-      "physical_lines": 95
+      "inline_explanation_lines": 45,
+      "physical_lines": 90
     },
     "public_program_files/runtime/app/__init__.py": {
       "code_or_original_comment_lines": 1,
@@ -78,9 +78,9 @@
       "physical_lines": 2
     },
     "public_program_files/runtime/app/ai/llm/llm_client.py": {
-      "code_or_original_comment_lines": 95,
-      "inline_explanation_lines": 116,
-      "physical_lines": 211
+      "code_or_original_comment_lines": 92,
+      "inline_explanation_lines": 92,
+      "physical_lines": 184
     },
     "public_program_files/runtime/app/ai/processors/__init__.py": {
       "code_or_original_comment_lines": 1,
@@ -89,48 +89,48 @@
     },
     "public_program_files/runtime/app/ai/processors/audio_long_service.py": {
       "code_or_original_comment_lines": 99,
-      "inline_explanation_lines": 122,
-      "physical_lines": 221
+      "inline_explanation_lines": 99,
+      "physical_lines": 198
     },
     "public_program_files/runtime/app/ai/processors/audio_service.py": {
       "code_or_original_comment_lines": 20,
-      "inline_explanation_lines": 30,
-      "physical_lines": 50
+      "inline_explanation_lines": 20,
+      "physical_lines": 40
     },
     "public_program_files/runtime/app/ai/processors/document_service.py": {
       "code_or_original_comment_lines": 98,
-      "inline_explanation_lines": 120,
-      "physical_lines": 218
+      "inline_explanation_lines": 98,
+      "physical_lines": 196
     },
     "public_program_files/runtime/app/ai/processors/export_service.py": {
       "code_or_original_comment_lines": 127,
-      "inline_explanation_lines": 148,
-      "physical_lines": 275
+      "inline_explanation_lines": 127,
+      "physical_lines": 254
     },
     "public_program_files/runtime/app/ai/processors/file_utils.py": {
-      "code_or_original_comment_lines": 42,
-      "inline_explanation_lines": 62,
-      "physical_lines": 104
+      "code_or_original_comment_lines": 41,
+      "inline_explanation_lines": 41,
+      "physical_lines": 82
     },
     "public_program_files/runtime/app/ai/processors/image_service.py": {
       "code_or_original_comment_lines": 50,
-      "inline_explanation_lines": 70,
-      "physical_lines": 120
+      "inline_explanation_lines": 50,
+      "physical_lines": 100
     },
     "public_program_files/runtime/app/ai/processors/llamaindex_service.py": {
-      "code_or_original_comment_lines": 70,
-      "inline_explanation_lines": 85,
-      "physical_lines": 155
+      "code_or_original_comment_lines": 64,
+      "inline_explanation_lines": 64,
+      "physical_lines": 128
     },
     "public_program_files/runtime/app/ai/processors/processor.py": {
-      "code_or_original_comment_lines": 202,
-      "inline_explanation_lines": 235,
-      "physical_lines": 437
+      "code_or_original_comment_lines": 182,
+      "inline_explanation_lines": 182,
+      "physical_lines": 364
     },
     "public_program_files/runtime/app/ai/prompts.py": {
-      "code_or_original_comment_lines": 112,
-      "inline_explanation_lines": 121,
-      "physical_lines": 233
+      "code_or_original_comment_lines": 17,
+      "inline_explanation_lines": 17,
+      "physical_lines": 34
     },
     "public_program_files/runtime/app/ai/rag/__init__.py": {
       "code_or_original_comment_lines": 1,
@@ -138,14 +138,14 @@
       "physical_lines": 2
     },
     "public_program_files/runtime/app/ai/rag/vector_index_service.py": {
-      "code_or_original_comment_lines": 92,
-      "inline_explanation_lines": 112,
-      "physical_lines": 204
+      "code_or_original_comment_lines": 91,
+      "inline_explanation_lines": 91,
+      "physical_lines": 182
     },
     "public_program_files/runtime/app/config.py": {
-      "code_or_original_comment_lines": 168,
-      "inline_explanation_lines": 207,
-      "physical_lines": 375
+      "code_or_original_comment_lines": 135,
+      "inline_explanation_lines": 135,
+      "physical_lines": 270
     },
     "public_program_files/runtime/app/query/__init__.py": {
       "code_or_original_comment_lines": 1,
@@ -154,8 +154,8 @@
     },
     "public_program_files/runtime/app/query/query.py": {
       "code_or_original_comment_lines": 26,
-      "inline_explanation_lines": 39,
-      "physical_lines": 65
+      "inline_explanation_lines": 26,
+      "physical_lines": 52
     },
     "public_program_files/runtime/app/services/__init__.py": {
       "code_or_original_comment_lines": 1,
@@ -174,8 +174,8 @@
     },
     "public_program_files/runtime/app/services/ai/indexing/knowledge_index_service.py": {
       "code_or_original_comment_lines": 131,
-      "inline_explanation_lines": 156,
-      "physical_lines": 287
+      "inline_explanation_lines": 131,
+      "physical_lines": 262
     },
     "public_program_files/runtime/app/vectorstore/__init__.py": {
       "code_or_original_comment_lines": 1,
@@ -184,22 +184,22 @@
     },
     "public_program_files/runtime/app/vectorstore/base.py": {
       "code_or_original_comment_lines": 23,
-      "inline_explanation_lines": 31,
-      "physical_lines": 54
+      "inline_explanation_lines": 23,
+      "physical_lines": 46
     },
     "public_program_files/runtime/app/vectorstore/connector.py": {
-      "code_or_original_comment_lines": 12,
-      "inline_explanation_lines": 16,
-      "physical_lines": 28
+      "code_or_original_comment_lines": 11,
+      "inline_explanation_lines": 11,
+      "physical_lines": 22
     },
     "public_program_files/runtime/app/vectorstore/qdrant_connector.py": {
-      "code_or_original_comment_lines": 98,
-      "inline_explanation_lines": 115,
-      "physical_lines": 213
+      "code_or_original_comment_lines": 97,
+      "inline_explanation_lines": 97,
+      "physical_lines": 194
     }
   },
-  "generated_at": "2026-07-03 16:33:01",
-  "inline_explanation_lines": 3054,
+  "generated_at": "2026-07-03 18:11:51",
+  "inline_explanation_lines": 2251,
   "python_file_count": 39,
   "uncovered_lines": []
 }
