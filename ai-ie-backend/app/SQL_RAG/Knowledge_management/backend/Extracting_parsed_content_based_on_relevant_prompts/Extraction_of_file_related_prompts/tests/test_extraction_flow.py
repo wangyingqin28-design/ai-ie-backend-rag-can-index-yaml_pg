@@ -13,12 +13,34 @@ from fastapi import UploadFile
 
 
 @pytest.mark.asyncio
+async def test_qa_prompt_keeps_explicit_short_negative_answers(
+    second_runtime: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    extraction = importlib.import_module(
+        "extraction_chain.audio_knowledge_extract_service"
+    )
+    captured: dict[str, str] = {}
+
+    async def fake_llm(prompt: str, *, system_prompt: str, **_: object) -> str:
+        captured["prompt"] = prompt
+        captured["system_prompt"] = system_prompt
+        return "[]"
+
+    monkeypatch.setattr(extraction, "llm_model_func", fake_llm)
+    await extraction.extract_audio_qa("您有兴趣合作吗？没有。")
+
+    assert "明确的简短肯定或否定回答也属于完整答案" in captured["system_prompt"]
+    assert "不得仅因对话不属于 ERP 软件场景而丢弃" in captured["system_prompt"]
+
+
+@pytest.mark.asyncio
 async def test_three_prompt_pipeline_merges_description_and_intent(
     second_runtime: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     extraction = importlib.import_module(
-        "app.services.ai.extraction.audio_knowledge_extract_service"
+        "extraction_chain.audio_knowledge_extract_service"
     )
     responses = iter(
         [
@@ -58,8 +80,8 @@ async def test_uploaded_file_runs_parse_raw_save_analysis_and_export_in_order(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    process_service = importlib.import_module("app.services.ai.extraction.process_service")
-    raw_service = importlib.import_module("app.services.ai.knowledge.raw_data_service")
+    process_service = importlib.import_module("extraction_chain.process_service")
+    raw_service = importlib.import_module("extraction_chain.raw_data_service")
     events: list[str] = []
     monkeypatch.setattr(process_service, "UPLOAD_DIR", tmp_path / "uploads")
     monkeypatch.setattr(process_service, "DEFAULT_OUTPUT_DIR", tmp_path / "outputs")

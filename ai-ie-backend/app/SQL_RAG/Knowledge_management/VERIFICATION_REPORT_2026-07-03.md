@@ -1,105 +1,70 @@
-# 文件解析与 DeepSeek 提取入库链迁移验证报告
+# 文件解析与 DeepSeek 提取入库链最终验证报告
 
-验证日期：2026-07-03（Asia/Shanghai）
+验证时间：2026-07-03（Asia/Shanghai）
 
-## 结论
+## 最终结构
 
-两条执行链已按项目内传递依赖闭包复制到指定目录，并从各自私有 `runtime/app` 成功运行。源定义与目标定义逐项一致，逐物理行中文注释台账无缺行或重复。目标副本已使用自己的 `runtime/.env` 访问真实硅基流动 DeepSeek 和 PostgreSQL，并完成写入、查询和清理。
+- `backend/public_program_files/runtime/app`：两条链唯一的公共实现和唯一运行时 `.env`。
+- `backend/File_parsing/parsing_logic/runtime/file_parsing_chain`：只保留 5 个文件解析薄入口。
+- `backend/Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/runtime/extraction_chain`：只保留提取、ORM、数据库服务和路由专属实现。
+- 两个业务目录均不存在 `runtime/app`，旧 `annotations` 目录已全部删除。
+- 跨三个所有权目录的相同 Python 文件散列组：0。
 
-唯一外部限制是源代码硬编码的真实 Qdrant 地址 `yulith:6333` 当前拒绝 TCP 连接；DNS 解析正常，本地内存 Qdrant 写入测试成功。该状态没有被表述为真实 Qdrant 已连通。
+## 全量定义与逐行注释审计
 
-## 源代码恢复
+- 公共源模块：17；公共源 `def/class`：73。
+- 提取链独占源模块：9；独占源 `def/class`：45。
+- 项目内传递依赖源定义总数：118；目标缺失：0；额外：0。
+- 运行时 Python 文件：39。
+- 代码或原注释物理行：2493。
+- 带日期到秒、作用和理由依据的中文内联说明行：3054（包含替代原空白行的逻辑分隔说明）。
+- 不合规代码行：0；覆盖率：100%。
+- 所有跨行字符串已等价改写；源和目标 AST 字符串值逐项相等，提示词语义未改变。
+- 三处运行时 `compileall`：退出码 0。
 
-- 损坏文件：`app/ai/processors/document_service.py`
-- 根因：文件在 `build_docling_converter` 文档字符串内被截断，末尾包含不完整 UTF-8 字符。
-- 原始损坏文件备份：`document_service.py.corrupt-20260703.bak`
-- 损坏文件 SHA256：`C0153552771A6575A0D23DEFBBB233874B58C753258EE6BC92BCA0BD8CD16B40`
-- 恢复文件 SHA256：`B32E3983052D9D112CCE9858072F4173CFBF941A62271D117F07C2E8972D9E1B`
-- 恢复定义：两个安全导出函数、Docling 转换器、Docling 解析、统一文档入口、LlamaIndex 问答入口、纯文本入口，共 7 个定义。
-- 额外修复：恢复 `export_service.export_processed_result`。原 `processor.process_file(export=True)` 延迟导入该函数，但源实现被整段注释，导致导出分支必然 `ImportError`。
+## 真实录音、硅基流动与数据库
 
-## 第一条链：文件解析
+源项目代码引用的历史文件
+`E:/录音文件/录音文件/1蔡小姐/20260505_151407详和开会2.m4a`
+已不存在；源 `app` 只留下 `_raw.md` 等历史输出，上传逻辑会在 `finally`
+删除原音频。按已批准方案，实测使用本机现存真实通话录音：
 
-目标：`backend/File_parsing/parsing_logic`
+`C:/Users/DELL/Documents/WeChat Files/wxid_ahul2j69cxzm22/FileStorage/File/2025-12/18859060061(18859060061)_20251217154314.mp3`
 
-经测试的顺序：
+- 文件长度：40704 字节；MP3 文件头：`FF FB`。
+- FFmpeg：8.1.2，实际完成 WAV 分片。
+- 硅基流动语音模型：`FunAudioLLM/SenseVoiceSmall`。
+- 转录分片：1；转录文本长度：61；报告只保存文本 SHA256，不保存全文。
+- DeepSeek：`deepseek-ai/DeepSeek-V4-Pro`，实际输入为上述录音的 API 转录结果，未替换为手写文本。
+- 实际入库：`AI_YuanShishuju` 1 行、`AI_Wendajilu` 1 行、`AI_Yitu` 1 行。
+- 截图字段 `AI_WenTi`、`AI_DaAn`、`AI_Biaozhu`、`WenTiYuanWen`、`DaAnYuanWen`、`WenTi_true`、`DaAn_true`、`Biaozhu_true` 全部非空。
+- 问答和意图均通过 `Yssj_id` 关联原文。
+- 测试后按问答、意图、原文顺序清理，三表剩余测试行：0。
+- 另一次固定文本 DeepSeek/数据库回归也通过并清理为 0。
 
-1. 文件路径校验与类型识别。
-2. 图片识别/OCR、Docling 文档解析、文本读取、FFmpeg 长音频分片与转录分发。
-3. 标准化解析结果组装。
-4. 文件夹批处理和单文件异常隔离。
-5. raw/summary Markdown 导出。
-6. 文档、文本、音频、图片索引项转换。
-7. Qdrant 元数据补充与写入边界。
-8. 配置、LlamaIndex、向量存储连接器和查询模型依赖。
+## 配置与安全
 
-完整性数据：
+- 源 `.env` 仅字节复制到 `public_program_files/runtime/.env`。
+- 两个业务运行时不再保存 `.env` 副本。
+- 公共 `.env` 被 `.gitignore` 排除；Git 跟踪的运行时 `.env`：0。
+- 报告未写入 API Key、数据库密码或完整连接串。
+- 所有敏感配置仅在真实测试进程中读取。
 
-- 项目内模块：17
-- 源 `def/class`：73
-- 目标 `def/class`：73
-- 缺失定义：0
-- 额外定义：0
-- 源物理行：2120
-- 中文逐行注释记录：2120
-- 内存 Qdrant 写入：1 条文档，计数验证为 1
-- 真实 Qdrant：`yulith` 解析为 `172.18.1.184`，TCP 6333 `ConnectionRefusedError`
+## 最终测试证据
 
-## 第二条链：DeepSeek 提取与入库
+- Python 全套（包含真实语音、真实 DeepSeek、真实 PostgreSQL）：47 passed，0 failed，0 skipped。
+- Node.js 既有基线：13 passed，0 failed。
+- 非 live Python 回归：44 passed。
+- 生成器连续运行两次的运行时/清单综合 SHA256 均为
+  `0bda2453c460703ac98f0012c1d4ef52a003d9a16efc1b49a8733ad519aea2d8`。
+- 内存 Qdrant 写入通过；配置的真实 `yulith:6333` 仍为
+  `ConnectionRefusedError`，没有虚报为已连通。
 
-目标：`backend/Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts`
+## 证据文件
 
-经测试的顺序：
-
-1. FastAPI 上传参数进入批量与单文件调度。
-2. 上传文件写入临时目录。
-3. 调用完整文件解析链并统一提取原文。
-4. 原文分片写入 `AI_YuanShishuju`。
-5. DeepSeek 执行问答提取、描述生成、描述合并和意图提取。
-6. 问答写入 `AI_Wendajilu`，意图写入 `AI_Yitu`。
-7. 三表通过 `Yssj_id` 关联。
-8. 可选导出和 `finally` 临时文件清理。
-
-完整性数据：
-
-- 项目内模块：26
-- 源 `def/class`：118
-- 目标 `def/class`：118
-- 缺失定义：0
-- 额外定义：0
-- 源物理行：3592
-- 中文逐行注释记录：3592
-
-## 真实 SiliconFlow 与数据库证据
-
-- 运行代码：第二条链目标副本，不是源目录模块。
-- API 主机：`api.siliconflow.cn`
-- 模型：`deepseek-ai/DeepSeek-V4-Pro`
-- API Key：目标运行配置中存在；报告和日志未记录值。
-- 数据库主机：`krauss`
-- 连接检查：`SELECT 1` 返回 1。
-- 本次验证写入：`AI_YuanShishuju` 1 行、`AI_Wendajilu` 1 行、`AI_Yitu` 1 行。
-- 已验证问答字段：`AI_WenTi`、`AI_DaAn`、`AI_Biaozhu`、`WenTiYuanWen`、`DaAnYuanWen`、`WenTi_true`、`DaAn_true`、`Biaozhu_true`，全部存在有效值。
-- 已验证意图字段：`AI_YiTu`、`YiTu`、`BiaoZhu`，全部存在有效值。
-- 关联验证：问答和意图的 `Yssj_id` 均等于本次原文 ID。
-- 清理验证：三表各删除 1 行，剩余测试记录 0。
-
-## 测试总览
-
-- Python 全套：40 passed，0 failed。
-- Knowledge_management 既有 Node.js 基线：13 passed，0 failed。
-- 两个 runtime 的 `compileall`：退出码 0。
-- 配置一致性：源 `.env` 与两个目标 `runtime/.env` 字节级 SHA256 一致。
-- 密钥保护：两个目标 `runtime/.env` 均被各自 `.gitignore` 排除；`.env.example` 只保留键名。
-- 镜像重复生成：模块数、定义数、生成时间和行注释覆盖保持稳定。
-
-## 审计文件
-
-每条链均包含：
-
-- `runtime/app`：自包含项目内依赖镜像。
-- `annotations`：每个源物理行一条含时间、作用、依据和原始代码的中文记录。
-- `manifests/definitions.json`：全部模块与 `def/class` 对比。
-- `manifests/source_hashes.json`：源/目标 SHA256。
-- `manifests/execution_order.md`：按已测试顺序记录完整执行链。
-- `tests`：隔离分支、映射、清理、真实 API/数据库和 Qdrant 探测测试。
+- `backend/public_program_files/manifests/ownership.json`
+- `backend/public_program_files/manifests/inline_comment_coverage.json`
+- `backend/File_parsing/parsing_logic/manifests/live_audio_transcription_report.json`
+- `backend/File_parsing/parsing_logic/manifests/real_qdrant_probe.json`
+- `backend/Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/manifests/live_audio_database_report.json`
+- `backend/Extracting_parsed_content_based_on_relevant_prompts/Extraction_of_file_related_prompts/manifests/live_test_report.json`

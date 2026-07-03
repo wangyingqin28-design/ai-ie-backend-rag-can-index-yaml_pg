@@ -37,8 +37,8 @@ async def test_copied_pipeline_uses_live_deepseek_and_persists_screenshot_fields
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     config_module = importlib.import_module("app.config")
-    process_service = importlib.import_module("app.services.ai.extraction.process_service")
-    models = importlib.import_module("app.models.erp_ai_models")
+    process_service = importlib.import_module("extraction_chain.process_service")
+    models = importlib.import_module("extraction_chain.erp_ai_models")
     marker = f"codex-live-{uuid.uuid4().hex[:12]}"
     filename = f"{marker}.txt"
     customer_id = int(time.time())

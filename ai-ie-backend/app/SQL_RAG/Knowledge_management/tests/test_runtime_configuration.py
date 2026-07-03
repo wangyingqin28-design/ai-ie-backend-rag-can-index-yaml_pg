@@ -1,23 +1,15 @@
-"""目标镜像运行配置与源记录配置的一致性测试。"""
+"""公共运行配置与源记录配置的一致性测试。"""
 
 from __future__ import annotations
 
 import hashlib
 from pathlib import Path
 
-import pytest
-
-
 KNOWLEDGE_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ENV = Path(
     r"D:\wkt\getsoft---ai-erp-backend-feature-rag-new\getsoft---ai-erp-backend\.env"
 )
-CHAIN_ROOTS = [
-    KNOWLEDGE_ROOT / "backend/File_parsing/parsing_logic",
-    KNOWLEDGE_ROOT
-    / "backend/Extracting_parsed_content_based_on_relevant_prompts"
-    / "Extraction_of_file_related_prompts",
-]
+PUBLIC_ROOT = KNOWLEDGE_ROOT / "backend/public_program_files"
 REQUIRED_KEYS = {
     "EMBEDDING_SERVICE_API_KEY",
     "EMBEDDING_SERVICE_URL",
@@ -51,9 +43,8 @@ def _parse_env(path: Path) -> dict[str, str]:
     return values
 
 
-@pytest.mark.parametrize("chain_root", CHAIN_ROOTS)
-def test_runtime_env_is_byte_identical_to_recorded_source(chain_root: Path) -> None:
-    target_env = chain_root / "runtime/.env"
+def test_runtime_env_is_byte_identical_to_recorded_source() -> None:
+    target_env = PUBLIC_ROOT / "runtime/.env"
     assert target_env.is_file(), f"缺少目标运行配置: {target_env}"
     assert _sha256(target_env) == _sha256(SOURCE_ENV)
 
@@ -64,10 +55,9 @@ def test_runtime_env_is_byte_identical_to_recorded_source(chain_root: Path) -> N
     assert all(target_values[key] == source_values[key] for key in REQUIRED_KEYS)
 
 
-@pytest.mark.parametrize("chain_root", CHAIN_ROOTS)
-def test_env_example_contains_names_but_no_values(chain_root: Path) -> None:
+def test_env_example_contains_names_but_no_values() -> None:
     source_values = _parse_env(SOURCE_ENV)
-    example_values = _parse_env(chain_root / ".env.example")
+    example_values = _parse_env(PUBLIC_ROOT / ".env.example")
 
     assert set(example_values) == set(source_values)
     assert all(value == "" for value in example_values.values())

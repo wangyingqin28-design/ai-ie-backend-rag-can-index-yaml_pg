@@ -16,7 +16,7 @@ async def test_temporary_upload_is_removed_when_parser_raises(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    service = importlib.import_module("app.services.ai.extraction.process_service")
+    service = importlib.import_module("extraction_chain.process_service")
     upload_dir = tmp_path / "uploads"
     monkeypatch.setattr(service, "UPLOAD_DIR", upload_dir)
 

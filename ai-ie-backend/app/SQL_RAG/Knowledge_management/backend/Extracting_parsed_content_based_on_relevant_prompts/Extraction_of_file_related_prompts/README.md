@@ -1,8 +1,5 @@
-# DeepSeek 提取入库链运行镜像
+# DeepSeek 提取入库业务链
 
-生成时间：2026-07-03 14:26:28
+生成时间：2026-07-03 16:33:01
 
-- `runtime/app`：保持原 `app.*` 导入关系的完整项目内依赖镜像。
-- `annotations`：每个源物理行一条中文作用与依据说明。
-- `manifests`：执行顺序、全部 def/class 和 SHA256 证据。
-- `tests`：该链的隔离与真实集成测试。
+`runtime/extraction_chain` 只保存提取、ORM、路由和入库专属实现，公共解析与模型客户端来自 `public_program_files/runtime/app`。

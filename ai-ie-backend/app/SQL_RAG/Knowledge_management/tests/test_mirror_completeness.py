@@ -1,89 +1,96 @@
-"""两个执行链镜像的定义与逐物理行注释完整性测试。"""
+"""公共层和业务层模块、定义与源散列的完整性审计。"""
 
 from __future__ import annotations
 
+import ast
+import hashlib
 import json
 from pathlib import Path
 
-import pytest
-
 
 KNOWLEDGE_ROOT = Path(__file__).resolve().parents[1]
-FIRST_ROOT = (
-    KNOWLEDGE_ROOT
-    / "backend/File_parsing/parsing_logic"
+SOURCE_ROOT = Path(
+    r"D:\wkt\getsoft---ai-erp-backend-feature-rag-new\getsoft---ai-erp-backend"
 )
-SECOND_ROOT = (
+PUBLIC_ROOT = KNOWLEDGE_ROOT / "backend/public_program_files"
+PARSING_ROOT = KNOWLEDGE_ROOT / "backend/File_parsing/parsing_logic"
+EXTRACTION_ROOT = (
     KNOWLEDGE_ROOT
     / "backend/Extracting_parsed_content_based_on_relevant_prompts"
     / "Extraction_of_file_related_prompts"
 )
 
 
-@pytest.mark.parametrize("chain_root", [FIRST_ROOT, SECOND_ROOT])
-def test_target_definition_set_equals_source_definition_set(chain_root: Path) -> None:
-    manifest_path = chain_root / "manifests/definitions.json"
-    assert manifest_path.is_file(), f"缺少定义清单: {manifest_path}"
-
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert manifest["missing_definitions"] == []
-    assert manifest["extra_definitions"] == []
-    assert manifest["source_definition_count"] == manifest["target_definition_count"]
-
-
-@pytest.mark.parametrize("chain_root", [FIRST_ROOT, SECOND_ROOT])
-def test_every_source_physical_line_has_exactly_one_annotation(chain_root: Path) -> None:
-    manifest_path = chain_root / "manifests/definitions.json"
-    assert manifest_path.is_file(), f"缺少定义清单: {manifest_path}"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-
-    for module in manifest["modules"]:
-        annotation_path = chain_root / module["annotation_path"]
-        assert annotation_path.is_file(), f"缺少逐行注释台账: {annotation_path}"
-        source_path = Path(module["source_path"])
-        source_lines = source_path.read_text(encoding="utf-8-sig").splitlines()
-
-        rows = [
-            json.loads(line)
-            for line in annotation_path.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        ]
-        annotated_lines = [row["源行号"] for row in rows]
-        expected_lines = list(range(1, module["source_line_count"] + 1))
-
-        assert annotated_lines == expected_lines
-        assert [row["原始代码"] for row in rows] == source_lines
-        assert all(row["迁移时间"] == manifest["generated_at"] for row in rows)
-        assert all(row["作用"] and row["理由依据"] for row in rows)
-
-
-@pytest.mark.parametrize("chain_root", [FIRST_ROOT, SECOND_ROOT])
-def test_every_runtime_module_is_a_complete_source_copy(chain_root: Path) -> None:
-    manifest = json.loads(
-        (chain_root / "manifests/definitions.json").read_text(encoding="utf-8")
-    )
-
-    for module in manifest["modules"]:
-        source = Path(module["source_path"]).read_text(encoding="utf-8-sig")
-        target = (chain_root / module["target_relative"]).read_text(encoding="utf-8")
-        provenance, copied_source = target.split("\n", 1)
-
-        assert provenance.startswith("# [")
-        assert "中文迁移说明" in provenance
-        assert copied_source == source
-
-
-@pytest.mark.parametrize("chain_root", [FIRST_ROOT, SECOND_ROOT])
-def test_mirror_hash_manifest_covers_every_module(chain_root: Path) -> None:
-    definitions = json.loads(
-        (chain_root / "manifests/definitions.json").read_text(encoding="utf-8")
-    )
-    hashes = json.loads(
-        (chain_root / "manifests/source_hashes.json").read_text(encoding="utf-8")
-    )
-
-    assert set(hashes["modules"]) == {
-        module["module"] for module in definitions["modules"]
+def _definitions(path: Path) -> set[tuple[str, str]]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    return {
+        (node.name, type(node).__name__)
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
     }
-    assert all(item["source_sha256"] for item in hashes["modules"].values())
-    assert all(item["target_sha256"] for item in hashes["modules"].values())
+
+
+def test_ownership_manifest_covers_all_source_definitions_and_hashes() -> None:
+    manifest = json.loads(
+        (PUBLIC_ROOT / "manifests/ownership.json").read_text(encoding="utf-8")
+    )
+    assert manifest["source_definition_count"] == 118
+    assert len(manifest["source_definitions"]) == 118
+
+    for module, expected_hash in manifest["source_hashes"].items():
+        relative = Path(*module.split("."))
+        source = SOURCE_ROOT / relative.with_suffix(".py")
+        assert source.is_file()
+        actual = hashlib.sha256(source.read_bytes()).hexdigest().upper()
+        assert actual == expected_hash
+
+
+def test_public_target_definitions_equal_their_canonical_sources() -> None:
+    manifest = json.loads(
+        (PUBLIC_ROOT / "manifests/ownership.json").read_text(encoding="utf-8")
+    )
+    for module in manifest["public_modules"]:
+        relative = Path(*module.split(".")).with_suffix(".py")
+        source = SOURCE_ROOT / relative
+        target = PUBLIC_ROOT / "runtime" / relative
+        assert _definitions(target) == {
+            (node.name, type(node).__name__)
+            for node in ast.walk(
+                ast.parse(source.read_text(encoding="utf-8-sig"))
+            )
+            if isinstance(
+                node,
+                (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef),
+            )
+        }
+
+
+def test_extraction_target_definitions_equal_their_canonical_sources() -> None:
+    manifest = json.loads(
+        (PUBLIC_ROOT / "manifests/ownership.json").read_text(encoding="utf-8")
+    )
+    target_root = EXTRACTION_ROOT / "runtime" / "extraction_chain"
+
+    for module, filename in manifest["extraction_module_targets"].items():
+        source = SOURCE_ROOT / Path(*module.split(".")).with_suffix(".py")
+        target = target_root / filename
+        source_definitions = {
+            (node.name, type(node).__name__)
+            for node in ast.walk(
+                ast.parse(source.read_text(encoding="utf-8-sig"))
+            )
+            if isinstance(
+                node,
+                (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef),
+            )
+        }
+        assert _definitions(target) == source_definitions
+
+
+def test_chain_manifests_report_no_missing_or_extra_definitions() -> None:
+    for root in (PARSING_ROOT, EXTRACTION_ROOT):
+        manifest = json.loads(
+            (root / "manifests/definitions.json").read_text(encoding="utf-8")
+        )
+        assert manifest["missing_definitions"] == []
+        assert manifest["extra_definitions"] == []

@@ -1,6 +1,6 @@
 {
   "chain": "文件解析链",
-  "generated_at": "2026-07-03 14:26:27",
+  "generated_at": "2026-07-03 16:33:01",
   "ordered_calls": [
     "app.ai.processors.processor.process_file",
     "app.ai.processors.file_utils.validate_file",

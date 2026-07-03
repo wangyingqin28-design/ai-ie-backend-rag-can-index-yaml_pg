@@ -1,0 +1,12 @@
+{
+  "tested_at": "2026-07-03T16:52:34+08:00",
+  "source_file_sha256": "c36cfede03ec75176df166bb3e7bb141256b7003ce7279968df5179072c032ef",
+  "source_file_bytes": 40704,
+  "ffmpeg_version": "ffmpeg version 8.1.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+  "siliconflow_host": "api.siliconflow.cn",
+  "transcription_model": "FunAudioLLM/SenseVoiceSmall",
+  "chunk_count": 1,
+  "transcript_length": 61,
+  "transcript_sha256": "767e07bbe47bf3bf39dfe80c84ffe7a92dfb0491bc2b7e5845e67feb0e30b1e9",
+  "success": true
+}

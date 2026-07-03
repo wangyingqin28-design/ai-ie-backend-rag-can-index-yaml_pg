@@ -1,0 +1,894 @@
+{
+  "extraction_module_targets": {
+    "app.models.base": "model_base.py",
+    "app.models.erp_ai_models": "erp_ai_models.py",
+    "app.routers.vlm_router": "vlm_router.py",
+    "app.services.ai.extraction.audio_knowledge_extract_service": "audio_knowledge_extract_service.py",
+    "app.services.ai.extraction.process_service": "process_service.py",
+    "app.services.ai.knowledge.intent_service": "intent_service.py",
+    "app.services.ai.knowledge.qa_pair_service": "qa_pair_service.py",
+    "app.services.ai.knowledge.raw_data_service": "raw_data_service.py",
+    "app.utils.snowflake_generator": "snowflake_generator.py"
+  },
+  "file_parsing_business_modules": [
+    "file_parsing_chain.entry"
+  ],
+  "generated_at": "2026-07-03 16:33:01",
+  "public_modules": [
+    "app.ai.llm.llm_client",
+    "app.ai.processors.audio_long_service",
+    "app.ai.processors.audio_service",
+    "app.ai.processors.document_service",
+    "app.ai.processors.export_service",
+    "app.ai.processors.file_utils",
+    "app.ai.processors.image_service",
+    "app.ai.processors.llamaindex_service",
+    "app.ai.processors.processor",
+    "app.ai.prompts",
+    "app.ai.rag.vector_index_service",
+    "app.config",
+    "app.query.query",
+    "app.services.ai.indexing.knowledge_index_service",
+    "app.vectorstore.base",
+    "app.vectorstore.connector",
+    "app.vectorstore.qdrant_connector"
+  ],
+  "source_definition_count": 118,
+  "source_definitions": [
+    {
+      "end_lineno": 16,
+      "kind": "def",
+      "lineno": 11,
+      "module": "app.ai.llm.llm_client",
+      "qualname": "build_openai_client"
+    },
+    {
+      "end_lineno": 32,
+      "kind": "async def",
+      "lineno": 19,
+      "module": "app.ai.llm.llm_client",
+      "qualname": "chat_complete"
+    },
+    {
+      "end_lineno": 61,
+      "kind": "async def",
+      "lineno": 35,
+      "module": "app.ai.llm.llm_client",
+      "qualname": "llm_model_func"
+    },
+    {
+      "end_lineno": 116,
+      "kind": "async def",
+      "lineno": 64,
+      "module": "app.ai.llm.llm_client",
+      "qualname": "vision_model_func"
+    },
+    {
+      "end_lineno": 13,
+      "kind": "def",
+      "lineno": 9,
+      "module": "app.ai.processors.audio_long_service",
+      "qualname": "check_ffmpeg_available"
+    },
+    {
+      "end_lineno": 53,
+      "kind": "def",
+      "lineno": 16,
+      "module": "app.ai.processors.audio_long_service",
+      "qualname": "split_audio"
+    },
+    {
+      "end_lineno": 122,
+      "kind": "async def",
+      "lineno": 56,
+      "module": "app.ai.processors.audio_long_service",
+      "qualname": "transcribe_long_audio"
+    },
+    {
+      "end_lineno": 14,
+      "kind": "def",
+      "lineno": 10,
+      "module": "app.ai.processors.audio_service",
+      "qualname": "build_audio_client"
+    },
+    {
+      "end_lineno": 34,
+      "kind": "async def",
+      "lineno": 17,
+      "module": "app.ai.processors.audio_service",
+      "qualname": "transcribe_audio"
+    },
+    {
+      "end_lineno": 30,
+      "kind": "def",
+      "lineno": 19,
+      "module": "app.ai.processors.document_service",
+      "qualname": "_safe_export_to_markdown"
+    },
+    {
+      "end_lineno": 44,
+      "kind": "def",
+      "lineno": 33,
+      "module": "app.ai.processors.document_service",
+      "qualname": "_safe_export_to_dict"
+    },
+    {
+      "end_lineno": 75,
+      "kind": "def",
+      "lineno": 47,
+      "module": "app.ai.processors.document_service",
+      "qualname": "build_docling_converter"
+    },
+    {
+      "end_lineno": 97,
+      "kind": "async def",
+      "lineno": 78,
+      "module": "app.ai.processors.document_service",
+      "qualname": "parse_document_with_docling"
+    },
+    {
+      "end_lineno": 108,
+      "kind": "async def",
+      "lineno": 100,
+      "module": "app.ai.processors.document_service",
+      "qualname": "process_document_file"
+    },
+    {
+      "end_lineno": 143,
+      "kind": "async def",
+      "lineno": 111,
+      "module": "app.ai.processors.document_service",
+      "qualname": "query_document_with_llamaindex"
+    },
+    {
+      "end_lineno": 149,
+      "kind": "async def",
+      "lineno": 146,
+      "module": "app.ai.processors.document_service",
+      "qualname": "process_text_file"
+    },
+    {
+      "end_lineno": 18,
+      "kind": "def",
+      "lineno": 4,
+      "module": "app.ai.processors.export_service",
+      "qualname": "get_available_file_path"
+    },
+    {
+      "end_lineno": 32,
+      "kind": "def",
+      "lineno": 21,
+      "module": "app.ai.processors.export_service",
+      "qualname": "build_export_files"
+    },
+    {
+      "end_lineno": 78,
+      "kind": "async def",
+      "lineno": 35,
+      "module": "app.ai.processors.export_service",
+      "qualname": "export_processed_result"
+    },
+    {
+      "end_lineno": 148,
+      "kind": "async def",
+      "lineno": 81,
+      "module": "app.ai.processors.export_service",
+      "qualname": "export_knowledge_extract_result"
+    },
+    {
+      "end_lineno": 29,
+      "kind": "def",
+      "lineno": 13,
+      "module": "app.ai.processors.file_utils",
+      "qualname": "get_file_type"
+    },
+    {
+      "end_lineno": 42,
+      "kind": "def",
+      "lineno": 32,
+      "module": "app.ai.processors.file_utils",
+      "qualname": "validate_file"
+    },
+    {
+      "end_lineno": 62,
+      "kind": "def",
+      "lineno": 45,
+      "module": "app.ai.processors.file_utils",
+      "qualname": "get_supported_files"
+    },
+    {
+      "end_lineno": 22,
+      "kind": "def",
+      "lineno": 12,
+      "module": "app.ai.processors.image_service",
+      "qualname": "image_to_base64"
+    },
+    {
+      "end_lineno": 40,
+      "kind": "def",
+      "lineno": 25,
+      "module": "app.ai.processors.image_service",
+      "qualname": "build_image_messages"
+    },
+    {
+      "end_lineno": 56,
+      "kind": "async def",
+      "lineno": 43,
+      "module": "app.ai.processors.image_service",
+      "qualname": "call_vision_model"
+    },
+    {
+      "end_lineno": 63,
+      "kind": "async def",
+      "lineno": 59,
+      "module": "app.ai.processors.image_service",
+      "qualname": "recognize_image"
+    },
+    {
+      "end_lineno": 70,
+      "kind": "async def",
+      "lineno": 66,
+      "module": "app.ai.processors.image_service",
+      "qualname": "ocr_image"
+    },
+    {
+      "end_lineno": 26,
+      "kind": "def",
+      "lineno": 11,
+      "module": "app.ai.processors.llamaindex_service",
+      "qualname": "configure_llamaindex"
+    },
+    {
+      "end_lineno": 56,
+      "kind": "def",
+      "lineno": 29,
+      "module": "app.ai.processors.llamaindex_service",
+      "qualname": "build_index_from_items"
+    },
+    {
+      "end_lineno": 85,
+      "kind": "def",
+      "lineno": 59,
+      "module": "app.ai.processors.llamaindex_service",
+      "qualname": "query_items_with_llamaindex"
+    },
+    {
+      "end_lineno": 130,
+      "kind": "async def",
+      "lineno": 26,
+      "module": "app.ai.processors.processor",
+      "qualname": "process_file"
+    },
+    {
+      "end_lineno": 184,
+      "kind": "async def",
+      "lineno": 133,
+      "module": "app.ai.processors.processor",
+      "qualname": "process_folder"
+    },
+    {
+      "end_lineno": 240,
+      "kind": "def",
+      "lineno": 187,
+      "module": "app.ai.processors.processor",
+      "qualname": "to_index_item"
+    },
+    {
+      "end_lineno": 272,
+      "kind": "async def",
+      "lineno": 247,
+      "module": "app.ai.processors.processor",
+      "qualname": "index_file_to_qdrant"
+    },
+    {
+      "end_lineno": 299,
+      "kind": "async def",
+      "lineno": 275,
+      "module": "app.ai.processors.processor",
+      "qualname": "index_folder_to_qdrant"
+    },
+    {
+      "end_lineno": 31,
+      "kind": "def",
+      "lineno": 20,
+      "module": "app.ai.rag.vector_index_service",
+      "qualname": "configure_embedding"
+    },
+    {
+      "end_lineno": 54,
+      "kind": "def",
+      "lineno": 34,
+      "module": "app.ai.rag.vector_index_service",
+      "qualname": "build_qdrant_vector_store"
+    },
+    {
+      "end_lineno": 88,
+      "kind": "def",
+      "lineno": 57,
+      "module": "app.ai.rag.vector_index_service",
+      "qualname": "build_documents_from_items"
+    },
+    {
+      "end_lineno": 126,
+      "kind": "def",
+      "lineno": 91,
+      "module": "app.ai.rag.vector_index_service",
+      "qualname": "upsert_items_to_qdrant"
+    },
+    {
+      "end_lineno": 126,
+      "kind": "class",
+      "lineno": 23,
+      "module": "app.config",
+      "qualname": "Config"
+    },
+    {
+      "end_lineno": 126,
+      "kind": "def",
+      "lineno": 91,
+      "module": "app.config",
+      "qualname": "Config.__init__"
+    },
+    {
+      "end_lineno": 138,
+      "kind": "def",
+      "lineno": 128,
+      "module": "app.config",
+      "qualname": "get_sync_database_url"
+    },
+    {
+      "end_lineno": 152,
+      "kind": "def",
+      "lineno": 141,
+      "module": "app.config",
+      "qualname": "get_async_database_url"
+    },
+    {
+      "end_lineno": 164,
+      "kind": "def",
+      "lineno": 155,
+      "module": "app.config",
+      "qualname": "new_async_engine"
+    },
+    {
+      "end_lineno": 176,
+      "kind": "def",
+      "lineno": 167,
+      "module": "app.config",
+      "qualname": "new_sync_engine"
+    },
+    {
+      "end_lineno": 191,
+      "kind": "async def",
+      "lineno": 186,
+      "module": "app.config",
+      "qualname": "get_async_session"
+    },
+    {
+      "end_lineno": 199,
+      "kind": "def",
+      "lineno": 194,
+      "module": "app.config",
+      "qualname": "get_sync_session"
+    },
+    {
+      "end_lineno": 207,
+      "kind": "def",
+      "lineno": 202,
+      "module": "app.config",
+      "qualname": "get_vector_db_connector"
+    },
+    {
+      "end_lineno": 11,
+      "kind": "class",
+      "lineno": 8,
+      "module": "app.query.query",
+      "qualname": "DocumentWithScore"
+    },
+    {
+      "end_lineno": 16,
+      "kind": "class",
+      "lineno": 14,
+      "module": "app.query.query",
+      "qualname": "Query"
+    },
+    {
+      "end_lineno": 20,
+      "kind": "class",
+      "lineno": 19,
+      "module": "app.query.query",
+      "qualname": "QueryWithEmbedding"
+    },
+    {
+      "end_lineno": 25,
+      "kind": "class",
+      "lineno": 23,
+      "module": "app.query.query",
+      "qualname": "QueryResult"
+    },
+    {
+      "end_lineno": 39,
+      "kind": "def",
+      "lineno": 28,
+      "module": "app.query.query",
+      "qualname": "get_packed_answer"
+    },
+    {
+      "end_lineno": 44,
+      "kind": "def",
+      "lineno": 7,
+      "module": "app.services.ai.indexing.knowledge_index_service",
+      "qualname": "to_index_item"
+    },
+    {
+      "end_lineno": 57,
+      "kind": "def",
+      "lineno": 47,
+      "module": "app.services.ai.indexing.knowledge_index_service",
+      "qualname": "enrich_index_item"
+    },
+    {
+      "end_lineno": 104,
+      "kind": "async def",
+      "lineno": 60,
+      "module": "app.services.ai.indexing.knowledge_index_service",
+      "qualname": "index_file_to_qdrant"
+    },
+    {
+      "end_lineno": 156,
+      "kind": "async def",
+      "lineno": 107,
+      "module": "app.services.ai.indexing.knowledge_index_service",
+      "qualname": "index_folder_to_qdrant"
+    },
+    {
+      "end_lineno": 31,
+      "kind": "class",
+      "lineno": 10,
+      "module": "app.vectorstore.base",
+      "qualname": "VectorStoreConnector"
+    },
+    {
+      "end_lineno": 15,
+      "kind": "def",
+      "lineno": 11,
+      "module": "app.vectorstore.base",
+      "qualname": "VectorStoreConnector.__init__"
+    },
+    {
+      "end_lineno": 19,
+      "kind": "def",
+      "lineno": 18,
+      "module": "app.vectorstore.base",
+      "qualname": "VectorStoreConnector.search"
+    },
+    {
+      "end_lineno": 23,
+      "kind": "def",
+      "lineno": 22,
+      "module": "app.vectorstore.base",
+      "qualname": "VectorStoreConnector.delete"
+    },
+    {
+      "end_lineno": 27,
+      "kind": "def",
+      "lineno": 26,
+      "module": "app.vectorstore.base",
+      "qualname": "VectorStoreConnector.create_collection"
+    },
+    {
+      "end_lineno": 31,
+      "kind": "def",
+      "lineno": 30,
+      "module": "app.vectorstore.base",
+      "qualname": "VectorStoreConnector.delete_collection"
+    },
+    {
+      "end_lineno": 16,
+      "kind": "class",
+      "lineno": 4,
+      "module": "app.vectorstore.connector",
+      "qualname": "VectorStoreConnectorAdaptor"
+    },
+    {
+      "end_lineno": 16,
+      "kind": "def",
+      "lineno": 5,
+      "module": "app.vectorstore.connector",
+      "qualname": "VectorStoreConnectorAdaptor.__init__"
+    },
+    {
+      "end_lineno": 115,
+      "kind": "class",
+      "lineno": 17,
+      "module": "app.vectorstore.qdrant_connector",
+      "qualname": "QdrantVectorStoreConnector"
+    },
+    {
+      "end_lineno": 49,
+      "kind": "def",
+      "lineno": 18,
+      "module": "app.vectorstore.qdrant_connector",
+      "qualname": "QdrantVectorStoreConnector.__init__"
+    },
+    {
+      "end_lineno": 74,
+      "kind": "def",
+      "lineno": 51,
+      "module": "app.vectorstore.qdrant_connector",
+      "qualname": "QdrantVectorStoreConnector.search"
+    },
+    {
+      "end_lineno": 95,
+      "kind": "def",
+      "lineno": 76,
+      "module": "app.vectorstore.qdrant_connector",
+      "qualname": "QdrantVectorStoreConnector._convert_scored_point_to_document_with_score"
+    },
+    {
+      "end_lineno": 100,
+      "kind": "def",
+      "lineno": 97,
+      "module": "app.vectorstore.qdrant_connector",
+      "qualname": "QdrantVectorStoreConnector.delete"
+    },
+    {
+      "end_lineno": 112,
+      "kind": "def",
+      "lineno": 102,
+      "module": "app.vectorstore.qdrant_connector",
+      "qualname": "QdrantVectorStoreConnector.create_collection"
+    },
+    {
+      "end_lineno": 115,
+      "kind": "def",
+      "lineno": 114,
+      "module": "app.vectorstore.qdrant_connector",
+      "qualname": "QdrantVectorStoreConnector.delete_collection"
+    },
+    {
+      "end_lineno": 6,
+      "kind": "class",
+      "lineno": 5,
+      "module": "app.models.base",
+      "qualname": "Base"
+    },
+    {
+      "end_lineno": 48,
+      "kind": "class",
+      "lineno": 25,
+      "module": "app.models.erp_ai_models",
+      "qualname": "ErpWendaJilu"
+    },
+    {
+      "end_lineno": 70,
+      "kind": "class",
+      "lineno": 51,
+      "module": "app.models.erp_ai_models",
+      "qualname": "ErpYitu"
+    },
+    {
+      "end_lineno": 93,
+      "kind": "class",
+      "lineno": 73,
+      "module": "app.models.erp_ai_models",
+      "qualname": "ErpYuanShiShuJu"
+    },
+    {
+      "end_lineno": 113,
+      "kind": "class",
+      "lineno": 96,
+      "module": "app.models.erp_ai_models",
+      "qualname": "ErpGongSi"
+    },
+    {
+      "end_lineno": 130,
+      "kind": "class",
+      "lineno": 116,
+      "module": "app.models.erp_ai_models",
+      "qualname": "AILiaoTianZhu"
+    },
+    {
+      "end_lineno": 151,
+      "kind": "class",
+      "lineno": 133,
+      "module": "app.models.erp_ai_models",
+      "qualname": "AILiaoTianJiLu"
+    },
+    {
+      "end_lineno": 171,
+      "kind": "class",
+      "lineno": 154,
+      "module": "app.models.erp_ai_models",
+      "qualname": "AIGongSiYongHu"
+    },
+    {
+      "end_lineno": 202,
+      "kind": "class",
+      "lineno": 174,
+      "module": "app.models.erp_ai_models",
+      "qualname": "AIYongHuShiYongTongJi"
+    },
+    {
+      "end_lineno": 225,
+      "kind": "class",
+      "lineno": 205,
+      "module": "app.models.erp_ai_models",
+      "qualname": "AITiShiCiGuanLiBiao"
+    },
+    {
+      "end_lineno": 253,
+      "kind": "class",
+      "lineno": 228,
+      "module": "app.models.erp_ai_models",
+      "qualname": "AIZiChanLeiXing"
+    },
+    {
+      "end_lineno": 31,
+      "kind": "async def",
+      "lineno": 11,
+      "module": "app.routers.vlm_router",
+      "qualname": "process_any_files"
+    },
+    {
+      "end_lineno": 40,
+      "kind": "async def",
+      "lineno": 16,
+      "module": "app.services.ai.extraction.audio_knowledge_extract_service",
+      "qualname": "extract_audio_qa"
+    },
+    {
+      "end_lineno": 71,
+      "kind": "async def",
+      "lineno": 43,
+      "module": "app.services.ai.extraction.audio_knowledge_extract_service",
+      "qualname": "extract_qa_description"
+    },
+    {
+      "end_lineno": 127,
+      "kind": "def",
+      "lineno": 74,
+      "module": "app.services.ai.extraction.audio_knowledge_extract_service",
+      "qualname": "merge_qa_description"
+    },
+    {
+      "end_lineno": 151,
+      "kind": "async def",
+      "lineno": 130,
+      "module": "app.services.ai.extraction.audio_knowledge_extract_service",
+      "qualname": "extract_audio_intent"
+    },
+    {
+      "end_lineno": 207,
+      "kind": "async def",
+      "lineno": 154,
+      "module": "app.services.ai.extraction.audio_knowledge_extract_service",
+      "qualname": "extract_audio_knowledge"
+    },
+    {
+      "end_lineno": 59,
+      "kind": "def",
+      "lineno": 46,
+      "module": "app.services.ai.extraction.process_service",
+      "qualname": "_safe_upload_name"
+    },
+    {
+      "end_lineno": 97,
+      "kind": "def",
+      "lineno": 62,
+      "module": "app.services.ai.extraction.process_service",
+      "qualname": "_extract_raw_text"
+    },
+    {
+      "end_lineno": 121,
+      "kind": "def",
+      "lineno": 100,
+      "module": "app.services.ai.extraction.process_service",
+      "qualname": "_compact_processed"
+    },
+    {
+      "end_lineno": 143,
+      "kind": "async def",
+      "lineno": 124,
+      "module": "app.services.ai.extraction.process_service",
+      "qualname": "_save_upload"
+    },
+    {
+      "end_lineno": 244,
+      "kind": "async def",
+      "lineno": 146,
+      "module": "app.services.ai.extraction.process_service",
+      "qualname": "_run_fixed_audio_knowledge_extract"
+    },
+    {
+      "end_lineno": 413,
+      "kind": "async def",
+      "lineno": 247,
+      "module": "app.services.ai.extraction.process_service",
+      "qualname": "process_uploaded_file"
+    },
+    {
+      "end_lineno": 489,
+      "kind": "async def",
+      "lineno": 416,
+      "module": "app.services.ai.extraction.process_service",
+      "qualname": "process_uploaded_files"
+    },
+    {
+      "end_lineno": 19,
+      "kind": "def",
+      "lineno": 14,
+      "module": "app.services.ai.knowledge.intent_service",
+      "qualname": "_strip_markdown_fence"
+    },
+    {
+      "end_lineno": 48,
+      "kind": "def",
+      "lineno": 22,
+      "module": "app.services.ai.knowledge.intent_service",
+      "qualname": "parse_ai_intent_result"
+    },
+    {
+      "end_lineno": 68,
+      "kind": "def",
+      "lineno": 51,
+      "module": "app.services.ai.knowledge.intent_service",
+      "qualname": "_status_to_int"
+    },
+    {
+      "end_lineno": 127,
+      "kind": "def",
+      "lineno": 71,
+      "module": "app.services.ai.knowledge.intent_service",
+      "qualname": "save_intents"
+    },
+    {
+      "end_lineno": 19,
+      "kind": "def",
+      "lineno": 14,
+      "module": "app.services.ai.knowledge.qa_pair_service",
+      "qualname": "_strip_markdown_fence"
+    },
+    {
+      "end_lineno": 48,
+      "kind": "def",
+      "lineno": 22,
+      "module": "app.services.ai.knowledge.qa_pair_service",
+      "qualname": "parse_ai_qa_result"
+    },
+    {
+      "end_lineno": 60,
+      "kind": "def",
+      "lineno": 51,
+      "module": "app.services.ai.knowledge.qa_pair_service",
+      "qualname": "_extract_evidence"
+    },
+    {
+      "end_lineno": 79,
+      "kind": "def",
+      "lineno": 63,
+      "module": "app.services.ai.knowledge.qa_pair_service",
+      "qualname": "_status_to_int"
+    },
+    {
+      "end_lineno": 137,
+      "kind": "def",
+      "lineno": 82,
+      "module": "app.services.ai.knowledge.qa_pair_service",
+      "qualname": "save_qa_pairs"
+    },
+    {
+      "end_lineno": 13,
+      "kind": "def",
+      "lineno": 10,
+      "module": "app.services.ai.knowledge.raw_data_service",
+      "qualname": "split_text"
+    },
+    {
+      "end_lineno": 24,
+      "kind": "def",
+      "lineno": 16,
+      "module": "app.services.ai.knowledge.raw_data_service",
+      "qualname": "_file_type_to_source"
+    },
+    {
+      "end_lineno": 74,
+      "kind": "def",
+      "lineno": 27,
+      "module": "app.services.ai.knowledge.raw_data_service",
+      "qualname": "save_raw_text"
+    },
+    {
+      "end_lineno": 101,
+      "kind": "class",
+      "lineno": 32,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "SnowFlake"
+    },
+    {
+      "end_lineno": 56,
+      "kind": "def",
+      "lineno": 37,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "SnowFlake.__init__"
+    },
+    {
+      "end_lineno": 63,
+      "kind": "def",
+      "lineno": 58,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "SnowFlake._gen_timestamp"
+    },
+    {
+      "end_lineno": 92,
+      "kind": "def",
+      "lineno": 65,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "SnowFlake.generate_id"
+    },
+    {
+      "end_lineno": 101,
+      "kind": "def",
+      "lineno": 94,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "SnowFlake._til_next_millis"
+    },
+    {
+      "end_lineno": 125,
+      "kind": "def",
+      "lineno": 109,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "generate_secure_id"
+    },
+    {
+      "end_lineno": 130,
+      "kind": "class",
+      "lineno": 128,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "SecureIdGenerator"
+    },
+    {
+      "end_lineno": 130,
+      "kind": "def",
+      "lineno": 129,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "SecureIdGenerator.generate_id"
+    },
+    {
+      "end_lineno": 137,
+      "kind": "def",
+      "lineno": 136,
+      "module": "app.utils.snowflake_generator",
+      "qualname": "generate_uuid7_id"
+    }
+  ],
+  "source_hashes": {
+    "app.ai.llm.llm_client": "12C3915F0AD58D6A914314EC590261765361E895B2B32D0E2711E61E199961D7",
+    "app.ai.processors.audio_long_service": "596BB6413AE633386EDA7B2656EE2A00C9CB0E787435454A4B2C8BCB1903AFE6",
+    "app.ai.processors.audio_service": "F7736A61FEEDAF3027FE352FC47ABE8A0C401718A131CD60CACC467405503664",
+    "app.ai.processors.document_service": "B32E3983052D9D112CCE9858072F4173CFBF941A62271D117F07C2E8972D9E1B",
+    "app.ai.processors.export_service": "EF5CF6300ACBA2A1CE52542FF65CCBF877B92050FEDD74BA73BA2079E6EA8970",
+    "app.ai.processors.file_utils": "DA0042FC64E125C9AE6698032C8A75384F8DC0EAFB8D682A3AF46EB37D29A228",
+    "app.ai.processors.image_service": "80E9A59F561A1534FFC3062BD4D3C801566C31F0B406848BAB62953A6B8EA4F4",
+    "app.ai.processors.llamaindex_service": "86A74E1577B87DA7EC0C082BAB58BB2DF064898CC1DF9EBA1C9A0A5923ED2950",
+    "app.ai.processors.processor": "DB7546136AF338A36423E0A0A3F445886C26158FF0B8D5094D6539B5C8D65A0E",
+    "app.ai.prompts": "AB9888F56A0D7207DBA08BC23769C92D8345EC033647A0E25432E5F6E4CF289B",
+    "app.ai.rag.vector_index_service": "D25A5FFBAF09024446058ED6BA3225FF252B824BE10E02C0A8EE859467B94958",
+    "app.config": "F81BB9621873589DE6B28BCAB2570391C0494FC60C9DFEE19DB84C65CC0AB409",
+    "app.models.base": "3D469D7C2E6425F7254E4737078B5CDF6CD2F3FB5749BB4D2E5CA682BD61B4F7",
+    "app.models.erp_ai_models": "B5CCA0EAC81CFB6367211DF7C31ABAA2ACD84A43A5021B605E1CF58C16290C90",
+    "app.query.query": "F3E4C20D3FF73291AA6CB8DFABD0DBF7D7A6086B293C621B0B595971D6D2D91E",
+    "app.routers.vlm_router": "1D7DAB2CA4343BBB9F866A9F689381FBD6D2A3C81CE2A3F6954B6C11B97267C2",
+    "app.services.ai.extraction.audio_knowledge_extract_service": "6596A179516F67C7AA56928135223BFC0CF9C8E2FA7F6213E43D8A5BA2A1843E",
+    "app.services.ai.extraction.process_service": "854C2AD3CE311AB93EEF72431074349003FAA767F3405F572BD145303551FDFE",
+    "app.services.ai.indexing.knowledge_index_service": "B34AE9CC02D2F4FEF72B55DAF967702B3D395CC3F9D2502CEDF9CB76004A2AB6",
+    "app.services.ai.knowledge.intent_service": "6690C03F5C74CE51ECC3F5A6531EC8A2C838A61BCC5A5BDE69B90EE57225A5FC",
+    "app.services.ai.knowledge.qa_pair_service": "118C088F0C07A02B0E22AE5C7D75079448021A5E6A3FC202A0D57813A7BC30E5",
+    "app.services.ai.knowledge.raw_data_service": "BAB064957F00DDFB499F59728F5F3AF1C5550FEB0B88FDECD2088E0B6D2FF914",
+    "app.utils.snowflake_generator": "DE499663E810E5DDF2CC34D73157C1FCE3618DD7A714354575D8F4FF70A5B7A8",
+    "app.vectorstore.base": "9E293AEFCFB8E345A33D2F947B863253455817B674C7F21B2853DF631DABEC29",
+    "app.vectorstore.connector": "D96972009ECCCA1E0533897877A6CBDD37AB7DFF2B735D169E41AE755BEAD418",
+    "app.vectorstore.qdrant_connector": "74058018C8232BD0ACB42E84828F607B231F495825AAE11231F8146F3860418B"
+  },
+  "source_root": "D:\\wkt\\getsoft---ai-erp-backend-feature-rag-new\\getsoft---ai-erp-backend"
+}

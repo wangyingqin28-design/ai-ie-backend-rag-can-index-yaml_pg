@@ -10,6 +10,22 @@ import pytest
 
 
 @pytest.mark.asyncio
+async def test_business_facade_delegates_to_the_single_public_processor(
+    first_runtime: Path,
+    tmp_path: Path,
+) -> None:
+    entry = importlib.import_module("file_parsing_chain.entry")
+    source = tmp_path / "facade.txt"
+    source.write_text("薄入口调用公共解析器", encoding="utf-8")
+
+    result = await entry.parse_file(str(source))
+    item = entry.to_index_item(result)
+
+    assert result["engine"] == "text"
+    assert item["text"] == "薄入口调用公共解析器"
+
+
+@pytest.mark.asyncio
 async def test_text_file_runs_real_validation_and_text_reader(
     first_runtime: Path,
     tmp_path: Path,

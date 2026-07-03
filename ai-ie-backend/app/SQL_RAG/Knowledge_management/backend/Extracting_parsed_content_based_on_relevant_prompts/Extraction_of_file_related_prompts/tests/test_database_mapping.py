@@ -39,7 +39,7 @@ def test_qa_save_maps_every_screenshot_field(
     second_runtime: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    service = importlib.import_module("app.services.ai.knowledge.qa_pair_service")
+    service = importlib.import_module("extraction_chain.qa_pair_service")
     session = FakeSession()
     monkeypatch.setattr(service, "sessionmaker", _sessionmaker_for(session))
     monkeypatch.setattr(service, "generate_uuid7_id", lambda: "qa-id")
@@ -80,7 +80,7 @@ def test_intent_save_maps_intent_fields(
     second_runtime: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    service = importlib.import_module("app.services.ai.knowledge.intent_service")
+    service = importlib.import_module("extraction_chain.intent_service")
     session = FakeSession()
     monkeypatch.setattr(service, "sessionmaker", _sessionmaker_for(session))
     monkeypatch.setattr(service, "generate_uuid7_id", lambda: "intent-id")
@@ -109,7 +109,7 @@ def test_raw_text_is_split_and_each_chunk_keeps_source_fields(
     second_runtime: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    service = importlib.import_module("app.services.ai.knowledge.raw_data_service")
+    service = importlib.import_module("extraction_chain.raw_data_service")
     session = FakeSession()
     monkeypatch.setattr(service, "sessionmaker", _sessionmaker_for(session))
     monkeypatch.setattr(service, "generate_uuid7_id", lambda: "raw-id")
