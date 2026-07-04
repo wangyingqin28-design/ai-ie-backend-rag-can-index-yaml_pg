@@ -1,7 +1,7 @@
 # Knowledge Management 全量服务与真实录音入库设计
 
 日期：2026-07-04
-状态：待用户书面复核
+状态：用户已批准方案 A；已补充三表全字段映射审计
 
 ## 目标
 
@@ -104,6 +104,95 @@
   -> 返回解析文本摘要、提取项和三类数据库 ID
 ```
 
+## 三表字段真值与纠错设计
+
+字段映射必须同时以原项目实际执行代码、DeepSeek 提示词结构和目标 PostgreSQL
+真实表结构为依据。审计确认目标数据库的三张表均包含旧 ORM 未声明的 `yima`
+列；目标库部分列类型也与旧 ORM 不一致。实施时必须让 ORM 与真实列类型对齐，
+并显式覆盖每个字段。字段值允许为 `NULL` 的前提是它在当前业务阶段本来就没有
+语义，而不是程序遗漏。
+
+### `AI_YuanShishuju`
+
+| 数据库字段 | 正确来源或值 | 验收规则 |
+| --- | --- | --- |
+| `shuju_id` | UUID7 原始数据 ID | 非空，并被两张明细表的 `Yssj_id` 引用 |
+| `ZcLeiXin` | multipart `asset_type_id` | 测试传入一个真实资产类型 ID，并原值保存 |
+| `ShuJu` | 硅基流动语音转录全文 | 非空，完整保存为单条 PostgreSQL `TEXT` |
+| `WenJianDiZhi` | 服务端接收上传后的处理路径 | 非空，遵循原项目上传处理语义 |
+| `WenJianName` | 上传原文件名 `新录音 4.m4a` | 精确匹配 |
+| `LaiYuan` | 文件类型 `audio` 的映射值 `3` | 等于 `3` |
+| `GuanLianKeHu` | multipart `customer_id` | 按目标库 `varchar(64)` 原值保存 |
+| `gs_id` | 当前独立 WebUI 无企业登录上下文 | `NULL`，与原项目调用参数一致 |
+| `del_flag` | 新增有效记录 | `false` |
+| `del_time` | 尚未删除 | `NULL` |
+| `in_userid` | 当前独立 WebUI 无登录用户上下文 | `NULL` |
+| `in_time` | 数据入库时间 | 非空且位于本次测试时间窗口内 |
+| `up_userid` | 尚未修改 | `NULL` |
+| `up_time` | 尚未修改 | `NULL` |
+| `yima` | 目标库保留列，原项目无业务赋值且现存记录全部为空 | 显式写入 `NULL` |
+
+原项目 `save_raw_text` 会把文本按 2000 字分块，却让所有分块复用同一组复合
+主键 `(shuju_id, GuanLianKeHu)`。超过一个分块时会触发主键冲突，并且问答、
+意图只能关联第一条。目标字段本身是 `TEXT`，因此本方案保存一条完整转写，
+不创建无法正确关联的孤立分块。
+
+### `AI_Wendajilu`
+
+| 数据库字段 | 正确来源或值 | 验收规则 |
+| --- | --- | --- |
+| `wdjl_ id` | 每条问答生成的 UUID7 | 非空且唯一 |
+| `Yssj_id` | 本次 `shuju_id` | 精确相等 |
+| `AI_WenTi` | DeepSeek `question` | 非空，保留客户问题原意 |
+| `AI_DaAn` | DeepSeek `answer` | 非空，保留解答和步骤 |
+| `AI_Biaozhu` | DeepSeek `question_scene` | 非空，只表示问题场景 |
+| `WenTiYuanWen` | `evidence.customer_text` | 非空，是支撑问题判断的原文 |
+| `DaAnYuanWen` | `evidence.service_text` | 非空，是支撑答案判断的原文 |
+| `WenTi_true` | DeepSeek `standard_question` | 非空，是标准化知识标题，不重复误写 `question` |
+| `DaAn_true` | DeepSeek `answer` | 非空；当前无人工校订时与 AI 答案一致 |
+| `Biaozhu_true` | 描述提示词生成的 `description` | 非空，只用于检索语义，不混入答案步骤 |
+| `ZhuangTai` | `answer_completeness` 状态映射 | 完整/部分完整/不完整/未明确映射为 `1/2/3/4` |
+| `ZhuangTai_id` | 尚未人工审核 | `NULL` |
+| `ZhuangTai_time` | 尚未人工审核 | `NULL` |
+| `YinPinShiJian` | DeepSeek `time` | 非空，按目标库 `varchar(64)` 保存 |
+| `gsId` | 当前独立 WebUI 无企业登录上下文 | `NULL` |
+| `in_userid` | 当前独立 WebUI 无登录用户上下文 | `NULL` |
+| `in_time` | 数据入库时间 | 非空且位于本次测试时间窗口内 |
+| `yima` | 目标库保留列，原项目无业务赋值且现存记录全部为空 | 显式写入 `NULL` |
+
+旧保存代码把 `question` 同时写入 `AI_WenTi` 与 `WenTi_true`，导致提示词已产出的
+`standard_question` 丢失。目标库现有问答记录中这两个字段全部不同，而
+`AI_DaAn` 与 `DaAn_true` 全部一致，也与截图语义相符。因此本方案修正为
+`question -> AI_WenTi`、`standard_question -> WenTi_true`。同时在问答输出
+格式中恢复 `answer_completeness`，使 `ZhuangTai` 有明确模型依据。
+
+### `AI_Yitu`
+
+| 数据库字段 | 正确来源或值 | 验收规则 |
+| --- | --- | --- |
+| `yt_ id` | 每条意图生成的 UUID7 | 非空且唯一 |
+| `Yssj_id` | 本次 `shuju_id` | 精确相等 |
+| `AI_YiTu` | DeepSeek `intent` | 非空，简洁概括意图 |
+| `YiTu` | DeepSeek `description` | 非空，说明场景、需求或关注点 |
+| `BiaoZhu` | DeepSeek `evidence` | 非空，是支撑意图判断的原文 |
+| `ZhuangTai` | 新提取记录初始状态 | 等于 `0`（待审核） |
+| `ZhuangTai_id` | 尚未人工审核 | `NULL` |
+| `ZhuangTai_time` | 尚未人工审核 | `NULL` |
+| `ShiJian` | DeepSeek `time` | 非空，按目标库 `varchar(255)` 保存 |
+| `gsId` | 当前独立 WebUI 无企业登录上下文 | `NULL` |
+| `del_time` | 尚未删除 | `NULL` |
+| `in_userid` | 当前独立 WebUI 无登录用户上下文 | `NULL` |
+| `in_time` | 数据入库时间 | 非空且位于本次测试时间窗口内 |
+| `yima` | 目标库保留列，原项目无业务赋值且现存记录全部为空 | 显式写入 `NULL` |
+
+### 字段完整性的判定方式
+
+“所有字段正确入库”不等同于强行给审核人、删除时间、修改人和保留列编造值。
+业务提取字段、主外键、来源字段和录入时间必须非空；尚未发生的审核、删除、
+修改事件及无登录上下文的企业/用户字段必须保持 `NULL`。验收脚本逐列比较
+上述期望值，并额外检查三表实际列集合与 ORM 列集合完全一致，防止未来再次
+出现 `yima` 一类静默漏列。
+
 ## 错误处理
 
 - 文件为空或扩展名不支持：返回 HTTP 400。
@@ -143,9 +232,11 @@
    - `AI_YuanShishuju` 至少一行；
    - `AI_Wendajilu` 至少一行；
    - `AI_Yitu` 至少一行；
-   - 问答表截图字段 `AI_WenTi`、`AI_DaAn`、`AI_Biaozhu`、
-     `WenTiYuanWen`、`DaAnYuanWen`、`WenTi_true`、`DaAn_true`、
-     `Biaozhu_true` 全部非空；
+   - 三表实际列集合与 ORM 列集合完全一致；
+   - 三个字段真值表规定的业务字段全部非空；
+   - 真值表规定的状态、关联、审计和保留字段逐列匹配预期值；
+   - `AI_WenTi`、`WenTi_true`、`AI_Biaozhu`、`Biaozhu_true` 各自取自
+     正确的 DeepSeek 字段，不允许重复错位；
    - 问答和意图的 `Yssj_id` 与原文 ID 一致。
 7. 不删除本次记录，在验证报告中记录文件 SHA256、服务端口、模型名、
    数据库 ID、行数和字段非空布尔值，不记录密钥、密码或完整连接串。
@@ -159,6 +250,6 @@
 - 新录音真实转录成功。
 - DeepSeek 真实提取成功。
 - 三表新记录真实存在并保留。
-- 截图字段全部有值。
+- 三表所有字段均按字段真值表正确赋值，业务字段无空值、无错位、无漏列。
 - 新增程序逐行注释审计为 100%。
 - Python、Node、PS1 静态测试和既有回归无失败。
