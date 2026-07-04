@@ -46,6 +46,7 @@ def test_qa_save_maps_every_screenshot_field(
     analysis = json.dumps(
         [{
             "question": "冷冻鸡胸怎么解冻？",
+            "standard_question": "冷冻鸡胸肉如何快速安全解冻？",
             "answer": "放入冷水中解冻",
             "question_scene": "烹饪准备",
             "description": "冷冻鸡胸解冻方法",
@@ -53,8 +54,8 @@ def test_qa_save_maps_every_screenshot_field(
                 "customer_text": "我想用冷冻鸡胸",
                 "service_text": "建议冷水解冻",
             },
-            "status": "完整",
-            "time": None,
+            "answer_completeness": "完整",
+            "time": "0s-30s",
         }],
         ensure_ascii=False,
     )
@@ -70,10 +71,14 @@ def test_qa_save_maps_every_screenshot_field(
     assert record.AI_Biaozhu == "烹饪准备"
     assert record.WenTiYuanWen == "我想用冷冻鸡胸"
     assert record.DaAnYuanWen == "建议冷水解冻"
-    assert record.WenTi_true == "冷冻鸡胸怎么解冻？"
+    assert record.WenTi_true == "冷冻鸡胸肉如何快速安全解冻？"
     assert record.DaAn_true == "放入冷水中解冻"
     assert record.Biaozhu_true == "冷冻鸡胸解冻方法"
     assert record.ZhuangTai == 1
+    assert record.YinPinShiJian == "0s-30s"
+    assert record.ZhuangTai_id is None
+    assert record.ZhuangTai_time is None
+    assert record.yima is None
 
 
 def test_intent_save_maps_intent_fields(
@@ -103,9 +108,14 @@ def test_intent_save_maps_intent_fields(
     assert record.YiTu == "用户询问食材处理"
     assert record.BiaoZhu == "冷冻鸡胸怎么解冻"
     assert record.ShiJian == "00:00"
+    assert record.ZhuangTai == 0
+    assert record.ZhuangTai_id is None
+    assert record.ZhuangTai_time is None
+    assert record.del_time is None
+    assert record.yima is None
 
 
-def test_raw_text_is_split_and_each_chunk_keeps_source_fields(
+def test_raw_text_is_saved_once_with_complete_source_and_audit_fields(
     second_runtime: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -124,9 +134,44 @@ def test_raw_text_is_split_and_each_chunk_keeps_source_fields(
     )
 
     assert raw_id == "raw-id"
-    assert len(session.records) == 2
-    assert {record.shuju_id for record in session.records} == {"raw-id"}
-    assert all(record.WenJianName == "原文.txt" for record in session.records)
-    assert all(record.LaiYuan == 2 for record in session.records)
-    assert all(record.GuanLianKeHu == 9 for record in session.records)
-    assert all(record.ZcLeiXin == "asset-id" for record in session.records)
+    assert len(session.records) == 1
+    record = session.records[0]
+    assert record.shuju_id == "raw-id"
+    assert record.ShuJu == "A" * 2001
+    assert record.WenJianName == "原文.txt"
+    assert record.WenJianDiZhi == "source.txt"
+    assert record.LaiYuan == 2
+    assert record.GuanLianKeHu == "9"
+    assert record.ZcLeiXin == "asset-id"
+    assert record.del_flag is False
+    assert record.del_time is None
+    assert record.up_userid is None
+    assert record.up_time is None
+    assert record.yima is None
+
+
+def test_orm_models_cover_every_live_knowledge_table_column(
+    second_runtime: Path,
+) -> None:
+    models = importlib.import_module("extraction_chain.erp_ai_models")
+    expected = {
+        models.ErpYuanShiShuJu: {
+            "shuju_id", "ZcLeiXin", "ShuJu", "WenJianDiZhi", "WenJianName",
+            "LaiYuan", "GuanLianKeHu", "gs_id", "del_flag", "del_time",
+            "in_userid", "in_time", "up_userid", "up_time", "yima",
+        },
+        models.ErpWendaJilu: {
+            "wdjl_ id", "Yssj_id", "AI_WenTi", "AI_DaAn", "AI_Biaozhu",
+            "WenTiYuanWen", "DaAnYuanWen", "WenTi_true", "DaAn_true",
+            "Biaozhu_true", "ZhuangTai", "ZhuangTai_id", "ZhuangTai_time",
+            "YinPinShiJian", "gsId", "in_userid", "in_time", "yima",
+        },
+        models.ErpYitu: {
+            "yt_ id", "Yssj_id", "AI_YiTu", "YiTu", "BiaoZhu", "ZhuangTai",
+            "ZhuangTai_id", "ZhuangTai_time", "ShiJian", "gsId", "del_time",
+            "in_userid", "in_time", "yima",
+        },
+    }
+
+    for model, expected_columns in expected.items():
+        assert set(model.__table__.columns.keys()) == expected_columns

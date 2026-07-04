@@ -32,6 +32,8 @@ async def test_qa_prompt_keeps_explicit_short_negative_answers(
 
     assert "明确的简短肯定或否定回答也属于完整答案" in captured["system_prompt"]
     assert "不得仅因对话不属于 ERP 软件场景而丢弃" in captured["system_prompt"]
+    assert '"answer_completeness"' in captured["system_prompt"]
+    assert "完整/部分完整/不完整/未明确" in captured["system_prompt"]
 
 
 @pytest.mark.asyncio
