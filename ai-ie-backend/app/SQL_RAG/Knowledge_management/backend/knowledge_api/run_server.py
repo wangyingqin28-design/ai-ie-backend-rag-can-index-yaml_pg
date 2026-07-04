@@ -2,8 +2,16 @@
 import argparse
 # [2026-07-04 10:18:20] 作用：导入 Python site 路径工具；理由依据：Knowledge 虚拟环境缺 Uvicorn，需只补充根虚拟环境包路径。
 import site
+# [2026-07-04 10:18:20] 作用：导入模块搜索路径列表；理由依据：PS1 以文件路径直接执行入口时，Python 默认只加入 knowledge_api 子目录而无法解析包名。
+import sys
+# [2026-07-04 10:18:20] 作用：导入跨平台路径工具；理由依据：需要从当前入口文件稳定推导 backend 包根目录。
+from pathlib import Path
 # [2026-07-04 10:18:20] 作用：导入序列类型；理由依据：启动函数支持测试传入参数列表。
 from typing import Sequence
+# [2026-07-04 10:18:20] 作用：仅在入口按文件路径直接执行时识别缺失的包上下文；理由依据：正常模块导入已有父目录，不应重复改变搜索顺序。
+if __package__ in {None, ""}:
+    # [2026-07-04 10:18:20] 作用：把 knowledge_api 的父目录 backend 插入模块搜索路径首位；理由依据：确保后续绝对导入与 Uvicorn 工厂路径都解析到当前知识库实现。
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 # [2026-07-04 10:18:20] 作用：导入运行时路径和根虚拟环境位置；理由依据：启动前统一配置依赖与业务模块。
 from knowledge_api.runtime_paths import ROOT_VENV_SITE_PACKAGES, configure_runtime_paths
 

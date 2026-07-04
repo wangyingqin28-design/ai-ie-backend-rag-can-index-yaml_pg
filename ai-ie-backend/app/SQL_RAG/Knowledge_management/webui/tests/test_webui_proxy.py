@@ -1,109 +1,109 @@
-# [2026-07-04 10:18:20] 作用：导入 HTTP 客户端；理由依据：通过真实本地端口验证代理请求字节。
+# [2026-07-04 10:18:20] 作用：导入或组合本行依赖 `import http.client`；理由依据：该依赖直接支持知识库真实上传、代理或回归测试。
 import http.client
-# [2026-07-04 10:18:20] 作用：导入线程组件；理由依据：测试中并行运行上游和 WebUI 两个 HTTP 服务。
+# [2026-07-04 10:18:20] 作用：导入或组合本行依赖 `import threading`；理由依据：该依赖直接支持知识库真实上传、代理或回归测试。
 import threading
-# [2026-07-04 10:18:20] 作用：导入轻量 HTTP 服务器类；理由依据：构造记录 multipart 请求的本地上游。
+# [2026-07-04 10:18:20] 作用：导入或组合本行依赖 `from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer`；理由依据：该依赖直接支持知识库真实上传、代理或回归测试。
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-# [2026-07-04 10:18:20] 作用：导入路径对象；理由依据：从测试位置定位 WebUI 源目录。
+# [2026-07-04 10:18:20] 作用：导入或组合本行依赖 `from pathlib import Path`；理由依据：该依赖直接支持知识库真实上传、代理或回归测试。
 from pathlib import Path
-# [2026-07-04 10:18:20] 作用：导入模块搜索路径控制；理由依据：webui_server.py 不在 Python 包目录中。
+# [2026-07-04 10:18:20] 作用：导入或组合本行依赖 `import sys`；理由依据：该依赖直接支持知识库真实上传、代理或回归测试。
 import sys
-# [2026-07-04 10:18:20] 作用：导入处理器偏函数；理由依据：为静态 WebUI 处理器绑定目录参数。
+# [2026-07-04 10:18:20] 作用：导入或组合本行依赖 `from functools import partial`；理由依据：该依赖直接支持知识库真实上传、代理或回归测试。
 from functools import partial
-# [2026-07-04 10:18:20] 作用：计算 WebUI 根目录；理由依据：避免依赖测试启动工作目录。
+# [2026-07-04 10:18:20] 作用：为 `WEBUI_ROOT` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
 WEBUI_ROOT = Path(__file__).resolve().parents[1]
-# [2026-07-04 10:18:20] 作用：加入 WebUI 模块搜索路径；理由依据：允许导入待测 webui_server。
+# [2026-07-04 10:18:20] 作用：执行本行代码 `sys.path.insert(0, str(WEBUI_ROOT))`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
 sys.path.insert(0, str(WEBUI_ROOT))
-# [2026-07-04 10:18:20] 作用：导入待测 WebUI 代理模块；理由依据：读取超时常量并启动真实处理器。
+# [2026-07-04 10:18:20] 作用：导入或组合本行依赖 `import webui_server`；理由依据：该依赖直接支持知识库真实上传、代理或回归测试。
 import webui_server
 
-# [2026-07-04 10:18:20] 作用：声明记录上游请求的处理器；理由依据：验证代理未改变 boundary 和文件字节。
+# [2026-07-04 10:18:20] 作用：声明 `RecordingHandler` 处理节点；理由依据：该节点属于已跑通的知识库前后端执行链。
 class RecordingHandler(BaseHTTPRequestHandler):
-    # [2026-07-04 10:18:20] 作用：保存最近请求内容类型；理由依据：断言 multipart boundary 原样转发。
+    # [2026-07-04 10:18:20] 作用：为 `content_type` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     content_type = ""
-    # [2026-07-04 10:18:20] 作用：保存最近请求主体；理由依据：断言文件字节逐字节一致。
+    # [2026-07-04 10:18:20] 作用：为 `body` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     body = b""
-    # [2026-07-04 10:18:20] 作用：处理代理转发的 POST；理由依据：真实上传接口使用 POST。
+    # [2026-07-04 10:18:20] 作用：声明 `do_POST` 处理节点；理由依据：该节点属于已跑通的知识库前后端执行链。
     def do_POST(self) -> None:
-        # [2026-07-04 10:18:20] 作用：读取请求体长度；理由依据：精确读取 multipart 字节。
+        # [2026-07-04 10:18:20] 作用：为 `length` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
         length = int(self.headers.get("Content-Length", "0"))
-        # [2026-07-04 10:18:20] 作用：记录完整内容类型；理由依据：boundary 参数不能丢失。
+        # [2026-07-04 10:18:20] 作用：为 `type(self).content_type` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
         type(self).content_type = self.headers.get("Content-Type", "")
-        # [2026-07-04 10:18:20] 作用：记录完整请求体；理由依据：代理不能重新编码音频数据。
+        # [2026-07-04 10:18:20] 作用：为 `type(self).body` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
         type(self).body = self.rfile.read(length)
-        # [2026-07-04 10:18:20] 作用：向代理返回成功状态；理由依据：完成往返协议验证。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `self.send_response(200)`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         self.send_response(200)
-        # [2026-07-04 10:18:20] 作用：设置 JSON 内容类型；理由依据：模拟 Knowledge 后端响应。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `self.send_header("Content-Type", "application/json")`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         self.send_header("Content-Type", "application/json")
-        # [2026-07-04 10:18:20] 作用：设置固定响应长度；理由依据：客户端可完整读取 `{}`。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `self.send_header("Content-Length", "2")`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         self.send_header("Content-Length", "2")
-        # [2026-07-04 10:18:20] 作用：结束响应头；理由依据：遵守 HTTP 协议。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `self.end_headers()`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         self.end_headers()
-        # [2026-07-04 10:18:20] 作用：写入空 JSON 响应；理由依据：代理应原样返回成功体。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `self.wfile.write(b"{}")`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         self.wfile.write(b"{}")
-    # [2026-07-04 10:18:20] 作用：关闭测试上游访问日志；理由依据：保持 pytest 输出干净。
+    # [2026-07-04 10:18:20] 作用：声明 `log_message` 处理节点；理由依据：该节点属于已跑通的知识库前后端执行链。
     def log_message(self, format: str, *args: object) -> None:
-        # [2026-07-04 10:18:20] 作用：显式忽略日志；理由依据：断言不依赖日志文本。
+        # [2026-07-04 10:18:20] 作用：执行控制结果 `return None`；理由依据：调用方必须获得明确返回值或可诊断失败。
         return None
 
-# [2026-07-04 10:18:20] 作用：在后台线程启动 HTTP 服务；理由依据：测试客户端需同步访问两个本地端口。
+# [2026-07-04 10:18:20] 作用：声明 `_serve` 处理节点；理由依据：该节点属于已跑通的知识库前后端执行链。
 def _serve(server: ThreadingHTTPServer) -> threading.Thread:
-    # [2026-07-04 10:18:20] 作用：创建守护线程；理由依据：测试异常时线程不阻止 Python 退出。
+    # [2026-07-04 10:18:20] 作用：为 `thread` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     thread = threading.Thread(target=server.serve_forever, daemon=True)
-    # [2026-07-04 10:18:20] 作用：启动服务器线程；理由依据：端口开始接受请求。
+    # [2026-07-04 10:18:20] 作用：执行本行代码 `thread.start()`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
     thread.start()
-    # [2026-07-04 10:18:20] 作用：返回线程句柄；理由依据：测试结束时等待干净退出。
+    # [2026-07-04 10:18:20] 作用：执行控制结果 `return thread`；理由依据：调用方必须获得明确返回值或可诊断失败。
     return thread
 
-# [2026-07-04 10:18:20] 作用：验证长超时及 multipart 透明转发；理由依据：真实音频解析不能因代理改写或三秒超时失败。
+# [2026-07-04 10:18:20] 作用：声明 `test_proxy_preserves_multipart_boundary_and_supports_long_processing` 处理节点；理由依据：该节点属于已跑通的知识库前后端执行链。
 def test_proxy_preserves_multipart_boundary_and_supports_long_processing() -> None:
-    # [2026-07-04 10:18:20] 作用：断言代理超时覆盖完整外部调用链；理由依据：FFmpeg、语音和三轮 DeepSeek 可能耗时数分钟。
+    # [2026-07-04 10:18:20] 作用：执行验收断言 `assert webui_server.PROXY_TIMEOUT_SECONDS >= 600`；理由依据：防止真实 multipart、错误传播或字段映射发生回归。
     assert webui_server.PROXY_TIMEOUT_SECONDS >= 600
-    # [2026-07-04 10:18:20] 作用：创建随机空闲端口的上游服务器；理由依据：避免与本机现有服务冲突。
+    # [2026-07-04 10:18:20] 作用：为 `upstream` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     upstream = ThreadingHTTPServer(("127.0.0.1", 0), RecordingHandler)
-    # [2026-07-04 10:18:20] 作用：启动上游服务器；理由依据：接收代理转发请求。
+    # [2026-07-04 10:18:20] 作用：为 `upstream_thread` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     upstream_thread = _serve(upstream)
-    # [2026-07-04 10:18:20] 作用：配置代理目标 URL；理由依据：把 WebUI 指向本测试上游。
+    # [2026-07-04 10:18:20] 作用：为 `webui_server.KnowledgeWebUIHandler.backend_url` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     webui_server.KnowledgeWebUIHandler.backend_url = f"http://127.0.0.1:{upstream.server_port}"
-    # [2026-07-04 10:18:20] 作用：绑定 WebUI 静态目录处理器；理由依据：匹配生产启动方式。
+    # [2026-07-04 10:18:20] 作用：为 `handler` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     handler = partial(webui_server.KnowledgeWebUIHandler, directory=str(WEBUI_ROOT))
-    # [2026-07-04 10:18:20] 作用：创建随机空闲端口的 WebUI 服务器；理由依据：避免测试端口冲突。
+    # [2026-07-04 10:18:20] 作用：为 `proxy` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     proxy = ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    # [2026-07-04 10:18:20] 作用：启动 WebUI 代理服务器；理由依据：通过真实网络层执行 `_proxy_request`。
+    # [2026-07-04 10:18:20] 作用：为 `proxy_thread` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     proxy_thread = _serve(proxy)
-    # [2026-07-04 10:18:20] 作用：定义 multipart boundary；理由依据：断言内容类型参数原样到达上游。
+    # [2026-07-04 10:18:20] 作用：为 `boundary` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     boundary = "----CodexKnowledgeBoundary"
-    # [2026-07-04 10:18:20] 作用：构造包含音频字节的 multipart 主体；理由依据：模拟浏览器 FormData 上传。
+    # [2026-07-04 10:18:20] 作用：为 `body` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     body = f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"audio.m4a\"\r\nContent-Type: audio/mp4\r\n\r\n".encode() + b"audio-bytes" + f"\r\n--{boundary}--\r\n".encode()
-    # [2026-07-04 10:18:20] 作用：创建到 WebUI 的 HTTP 连接；理由依据：测试 `/api` 代理入口。
+    # [2026-07-04 10:18:20] 作用：为 `connection` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
     connection = http.client.HTTPConnection("127.0.0.1", proxy.server_port, timeout=5)
-    # [2026-07-04 10:18:20] 作用：开始确保服务器资源最终清理；理由依据：测试成功或失败均不能遗留监听端口。
+    # [2026-07-04 10:18:20] 作用：进入异常控制片段 `try:`；理由依据：真实网络、模型和数据库调用必须正确传播并清理异常状态。
     try:
-        # [2026-07-04 10:18:20] 作用：发送 multipart POST；理由依据：路径与生产前端完全一致。
+        # [2026-07-04 10:18:20] 作用：为 `connection.request("POST", "/api/knowledge/parse", body` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
         connection.request("POST", "/api/knowledge/parse", body=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-        # [2026-07-04 10:18:20] 作用：读取代理响应；理由依据：等待转发完整完成。
+        # [2026-07-04 10:18:20] 作用：为 `response` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
         response = connection.getresponse()
-        # [2026-07-04 10:18:20] 作用：消费响应体；理由依据：释放 HTTP 连接。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `response.read()`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         response.read()
-        # [2026-07-04 10:18:20] 作用：断言代理返回成功；理由依据：上游成功应透明传回。
+        # [2026-07-04 10:18:20] 作用：执行验收断言 `assert response.status == 200`；理由依据：防止真实 multipart、错误传播或字段映射发生回归。
         assert response.status == 200
-        # [2026-07-04 10:18:20] 作用：断言 boundary 原样转发；理由依据：FastAPI 依赖该参数解析文件。
+        # [2026-07-04 10:18:20] 作用：执行验收断言 `assert RecordingHandler.content_type == f"multipart/form-data; boundary={boundary}"`；理由依据：防止真实 multipart、错误传播或字段映射发生回归。
         assert RecordingHandler.content_type == f"multipart/form-data; boundary={boundary}"
-        # [2026-07-04 10:18:20] 作用：断言主体字节完全一致；理由依据：音频不得被代理重编码或截断。
+        # [2026-07-04 10:18:20] 作用：执行验收断言 `assert RecordingHandler.body == body`；理由依据：防止真实 multipart、错误传播或字段映射发生回归。
         assert RecordingHandler.body == body
-    # [2026-07-04 10:18:20] 作用：清理客户端和两个服务器；理由依据：保持测试可重复运行。
+    # [2026-07-04 10:18:20] 作用：进入异常控制片段 `finally:`；理由依据：真实网络、模型和数据库调用必须正确传播并清理异常状态。
     finally:
-        # [2026-07-04 10:18:20] 作用：关闭 HTTP 客户端连接；理由依据：释放套接字。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `connection.close()`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         connection.close()
-        # [2026-07-04 10:18:20] 作用：请求 WebUI 服务停止；理由依据：释放代理测试端口。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `proxy.shutdown()`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         proxy.shutdown()
-        # [2026-07-04 10:18:20] 作用：关闭 WebUI 服务套接字；理由依据：立即回收端口资源。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `proxy.server_close()`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         proxy.server_close()
-        # [2026-07-04 10:18:20] 作用：等待 WebUI 线程退出；理由依据：避免后台线程泄漏。
+        # [2026-07-04 10:18:20] 作用：为 `proxy_thread.join(timeout` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
         proxy_thread.join(timeout=5)
-        # [2026-07-04 10:18:20] 作用：请求上游服务停止；理由依据：释放上游测试端口。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `upstream.shutdown()`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         upstream.shutdown()
-        # [2026-07-04 10:18:20] 作用：关闭上游服务套接字；理由依据：立即回收端口资源。
+        # [2026-07-04 10:18:20] 作用：执行本行代码 `upstream.server_close()`；理由依据：本行是知识库真实前后端链路或其回归验证的必要步骤。
         upstream.server_close()
-        # [2026-07-04 10:18:20] 作用：等待上游线程退出；理由依据：保证测试结束后无残留进程。
+        # [2026-07-04 10:18:20] 作用：为 `upstream_thread.join(timeout` 计算并保存本行结果；理由依据：后续上传、页面状态、代理或断言复用该确定值。
         upstream_thread.join(timeout=5)

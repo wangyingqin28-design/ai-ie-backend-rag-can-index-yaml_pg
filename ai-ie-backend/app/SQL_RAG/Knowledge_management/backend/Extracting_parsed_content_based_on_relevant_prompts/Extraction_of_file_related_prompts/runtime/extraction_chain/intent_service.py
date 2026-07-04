@@ -1,172 +1,168 @@
-# [2026-07-04 10:18:20] 作用：导入 JSON 解析器；理由依据：DeepSeek 意图结果以 JSON 字符串返回。
+# [2026-07-04 10:18:20] 作用：导入依赖 `import json`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 import json
-# [2026-07-04 10:18:20] 作用：导入正则表达式；理由依据：需清理模型可能返回的 Markdown 围栏。
+# [2026-07-04 10:18:20] 作用：导入依赖 `import re`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 import re
-# [2026-07-04 10:18:20] 作用：导入当前时间；理由依据：每条意图必须记录 in_time。
+# [2026-07-04 10:18:20] 作用：导入依赖 `from datetime import datetime`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 from datetime import datetime
-# [2026-07-04 10:18:20] 作用：导入 JSON 解码异常；理由依据：对非标准模型输出执行安全恢复。
+# [2026-07-04 10:18:20] 作用：导入依赖 `from json import JSONDecodeError`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 from json import JSONDecodeError
-# [2026-07-04 10:18:20] 作用：导入任意值类型；理由依据：解析前模型字段类型尚未完全确定。
+# [2026-07-04 10:18:20] 作用：导入依赖 `from typing import Any`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 from typing import Any
-# [2026-07-04 10:18:20] 作用：导入同步会话组件；理由依据：沿用原项目 PostgreSQL 事务边界。
+# [2026-07-04 10:18:20] 作用：导入依赖 `from sqlalchemy.orm import Session, sessionmaker`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 from sqlalchemy.orm import Session, sessionmaker
-# [2026-07-04 10:18:20] 作用：导入公共同步数据库引擎；理由依据：意图与原文、问答写入同一数据库。
+# [2026-07-04 10:18:20] 作用：导入依赖 `from app.config import sync_engine`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 from app.config import sync_engine
-# [2026-07-04 10:18:20] 作用：导入意图 ORM；理由依据：本服务只负责 AI_Yitu 入库。
+# [2026-07-04 10:18:20] 作用：导入依赖 `from extraction_chain.erp_ai_models import ErpYitu`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 from extraction_chain.erp_ai_models import ErpYitu
-# [2026-07-04 10:18:20] 作用：导入 UUID7 生成器；理由依据：每条意图需要独立业务 ID。
+# [2026-07-04 10:18:20] 作用：导入依赖 `from extraction_chain.snowflake_generator import generate_uuid7_id`，供 模块级初始化 使用；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行属于模块级初始化
 from extraction_chain.snowflake_generator import generate_uuid7_id
-
-# [2026-07-04 10:18:20] 作用：声明 Markdown 围栏清理函数；理由依据：兼容 ```json 包裹且不改变意图字段。
+# [2026-07-04 10:18:20] 作用：声明同步函数 _strip_markdown_fence，封装可复用的处理步骤；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _strip_markdown_fence
 def _strip_markdown_fence(text: str) -> str:
-    # [2026-07-04 10:18:20] 作用：标准化输入并去除首尾空白；理由依据：空白不应影响 JSON 解码。
+    # [2026-07-04 10:18:20] 作用：为 cleaned 构造并保存赋值结果；本行执行 `cleaned = (text or "").strip()`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _strip_markdown_fence
     cleaned = (text or "").strip()
-    # [2026-07-04 10:18:20] 作用：移除开头 json 围栏；理由依据：部分模型会附加语言标记。
+    # [2026-07-04 10:18:20] 作用：为 cleaned 构造并保存赋值结果；本行执行 `cleaned = re.sub(r"^```json\s*", "", cleaned, flags=re.IGNORECASE)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _strip_markdown_fence
     cleaned = re.sub(r"^```json\s*", "", cleaned, flags=re.IGNORECASE)
-    # [2026-07-04 10:18:20] 作用：移除开头普通围栏；理由依据：兼容未标注语言的代码块。
+    # [2026-07-04 10:18:20] 作用：为 cleaned 构造并保存赋值结果；本行执行 `cleaned = re.sub(r"^```\s*", "", cleaned)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _strip_markdown_fence
     cleaned = re.sub(r"^```\s*", "", cleaned)
-    # [2026-07-04 10:18:20] 作用：移除末尾围栏；理由依据：确保剩余文本是 JSON 候选。
+    # [2026-07-04 10:18:20] 作用：为 cleaned 构造并保存赋值结果；本行执行 `cleaned = re.sub(r"\s*```$", "", cleaned)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _strip_markdown_fence
     cleaned = re.sub(r"\s*```$", "", cleaned)
-    # [2026-07-04 10:18:20] 作用：返回清理后的意图文本；理由依据：后续解析只读取净化结果。
+    # [2026-07-04 10:18:20] 作用：从 _strip_markdown_fence 返回表达式 `return cleaned.strip()` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _strip_markdown_fence
     return cleaned.strip()
-
-# [2026-07-04 10:18:20] 作用：声明意图模型结果解析入口；理由依据：入库前必须规范为字典列表。
+# [2026-07-04 10:18:20] 作用：声明同步函数 parse_ai_intent_result，封装可复用的处理步骤；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
 def parse_ai_intent_result(analysis: str) -> list[dict[str, Any]]:
-    # [2026-07-04 10:18:20] 作用：处理空模型返回；理由依据：空结果不应生成伪意图。
+    # [2026-07-04 10:18:20] 作用：在 parse_ai_intent_result 中按条件 `if not analysis:` 选择执行分支；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
     if not analysis:
-        # [2026-07-04 10:18:20] 作用：返回空意图列表；理由依据：调用方据此跳过入库。
+        # [2026-07-04 10:18:20] 作用：从 parse_ai_intent_result 返回表达式 `return []` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         return []
-    # [2026-07-04 10:18:20] 作用：清理模型围栏；理由依据：提高标准 JSON 解码成功率。
+    # [2026-07-04 10:18:20] 作用：为 text 构造并保存赋值结果；本行执行 `text = _strip_markdown_fence(analysis)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
     text = _strip_markdown_fence(analysis)
-    # [2026-07-04 10:18:20] 作用：开始解析完整 JSON；理由依据：标准输出应直接是数组。
+    # [2026-07-04 10:18:20] 作用：在 parse_ai_intent_result 中用 `try:` 控制异常处理或资源清理；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
     try:
-        # [2026-07-04 10:18:20] 作用：解码完整模型返回；理由依据：保留所有意图字段。
+        # [2026-07-04 10:18:20] 作用：为 data 构造并保存赋值结果；本行执行 `data = json.loads(text)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         data = json.loads(text)
-    # [2026-07-04 10:18:20] 作用：捕获附带说明文字的输出；理由依据：从首个 JSON 起点尝试恢复。
+    # [2026-07-04 10:18:20] 作用：在 parse_ai_intent_result 中用 `except JSONDecodeError:` 控制异常处理或资源清理；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
     except JSONDecodeError:
-        # [2026-07-04 10:18:20] 作用：创建偏移解码器；理由依据：允许忽略 JSON 后的多余文字。
+        # [2026-07-04 10:18:20] 作用：为 decoder 构造并保存赋值结果；本行执行 `decoder = json.JSONDecoder()`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         decoder = json.JSONDecoder()
-        # [2026-07-04 10:18:20] 作用：查找数组或对象起点；理由依据：兼容单项和多项意图。
+        # [2026-07-04 10:18:20] 作用：为 starts 构造并保存赋值结果；本行执行 `starts = [position for position in (text.find("["), text.find("{")) if position != -1]`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         starts = [position for position in (text.find("["), text.find("{")) if position != -1]
-        # [2026-07-04 10:18:20] 作用：检测无可恢复 JSON；理由依据：自然语言说明不能入库。
+        # [2026-07-04 10:18:20] 作用：在 parse_ai_intent_result 中按条件 `if not starts:` 选择执行分支；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         if not starts:
-            # [2026-07-04 10:18:20] 作用：返回空结果；理由依据：阻止错误内容生成记录。
+            # [2026-07-04 10:18:20] 作用：从 parse_ai_intent_result 返回表达式 `return []` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
             return []
-        # [2026-07-04 10:18:20] 作用：选择最早 JSON 起点；理由依据：保留首个完整结构。
+        # [2026-07-04 10:18:20] 作用：为 start 构造并保存赋值结果；本行执行 `start = min(starts)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         start = min(starts)
-        # [2026-07-04 10:18:20] 作用：开始恢复解码；理由依据：兼容模型前置说明。
+        # [2026-07-04 10:18:20] 作用：在 parse_ai_intent_result 中用 `try:` 控制异常处理或资源清理；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         try:
-            # [2026-07-04 10:18:20] 作用：解码首个 JSON 值；理由依据：忽略尾部非 JSON 说明。
+            # [2026-07-04 10:18:20] 作用：为 (data, _) 构造并保存赋值结果；本行执行 `data, _ = decoder.raw_decode(text[start:])`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
             data, _ = decoder.raw_decode(text[start:])
-        # [2026-07-04 10:18:20] 作用：捕获仍不可恢复的结构；理由依据：错误 JSON 不得入库。
+        # [2026-07-04 10:18:20] 作用：在 parse_ai_intent_result 中用 `except JSONDecodeError:` 控制异常处理或资源清理；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         except JSONDecodeError:
-            # [2026-07-04 10:18:20] 作用：返回空结果；理由依据：由上层明确处理未提取到意图。
+            # [2026-07-04 10:18:20] 作用：从 parse_ai_intent_result 返回表达式 `return []` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
             return []
-    # [2026-07-04 10:18:20] 作用：把单个意图对象规范成列表；理由依据：统一保存循环接口。
+    # [2026-07-04 10:18:20] 作用：在 parse_ai_intent_result 中按条件 `if isinstance(data, dict):` 选择执行分支；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
     if isinstance(data, dict):
-        # [2026-07-04 10:18:20] 作用：包装单意图对象；理由依据：兼容仅一个用户意图的返回。
+        # [2026-07-04 10:18:20] 作用：为 data 构造并保存赋值结果；本行执行 `data = [data]`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         data = [data]
-    # [2026-07-04 10:18:20] 作用：拒绝非列表顶层类型；理由依据：字符串和数字没有字段映射。
+    # [2026-07-04 10:18:20] 作用：在 parse_ai_intent_result 中按条件 `if not isinstance(data, list):` 选择执行分支；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
     if not isinstance(data, list):
-        # [2026-07-04 10:18:20] 作用：返回空结果；理由依据：避免错误类型进入事务。
+        # [2026-07-04 10:18:20] 作用：从 parse_ai_intent_result 返回表达式 `return []` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
         return []
-    # [2026-07-04 10:18:20] 作用：仅保留字典意图项；理由依据：每项必须支持按字段名读取。
+    # [2026-07-04 10:18:20] 作用：从 parse_ai_intent_result 返回表达式 `return [item for item in data if isinstance(item, dict)]` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 parse_ai_intent_result
     return [item for item in data if isinstance(item, dict)]
-
-# [2026-07-04 10:18:20] 作用：保留原项目状态转换函数；理由依据：执行链定义完整性要求不能遗漏已有 def。
+# [2026-07-04 10:18:20] 作用：声明同步函数 _status_to_int，封装可复用的处理步骤；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _status_to_int
 def _status_to_int(value: Any) -> int:
-    # [2026-07-04 10:18:20] 作用：为空状态设置待审核；理由依据：未知状态不能标记为已通过。
+    # [2026-07-04 10:18:20] 作用：在 _status_to_int 中按条件 `if value is None:` 选择执行分支；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _status_to_int
     if value is None:
-        # [2026-07-04 10:18:20] 作用：返回状态 0；理由依据：新意图固定从待审核开始。
+        # [2026-07-04 10:18:20] 作用：从 _status_to_int 返回表达式 `return 0` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _status_to_int
         return 0
-    # [2026-07-04 10:18:20] 作用：接受已有整数状态；理由依据：兼容上游或人工直接提供状态码。
+    # [2026-07-04 10:18:20] 作用：在 _status_to_int 中按条件 `if isinstance(value, int):` 选择执行分支；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _status_to_int
     if isinstance(value, int):
-        # [2026-07-04 10:18:20] 作用：原样返回状态码；理由依据：避免无意义二次转换。
+        # [2026-07-04 10:18:20] 作用：从 _status_to_int 返回表达式 `return value` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _status_to_int
         return value
-    # [2026-07-04 10:18:20] 作用：定义状态文本映射；理由依据：与问答状态约定保持一致。
+    # [2026-07-04 10:18:20] 作用：为 mapping 构造并保存赋值结果；本行执行 `mapping = {"待审核": 0, "完整": 1, "部分完整": 2, "不完整": 3, "未明确": 4, "在用": 1, "弃用": 2}`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _status_to_int
     mapping = {"待审核": 0, "完整": 1, "部分完整": 2, "不完整": 3, "未明确": 4, "在用": 1, "弃用": 2}
-    # [2026-07-04 10:18:20] 作用：返回映射状态或待审核；理由依据：未知值不能误判。
+    # [2026-07-04 10:18:20] 作用：从 _status_to_int 返回表达式 `return mapping.get(str(value).strip(), 0)` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 _status_to_int
     return mapping.get(str(value).strip(), 0)
-
-# [2026-07-04 10:18:20] 作用：声明意图批量保存入口；理由依据：把 DeepSeek 结构化意图逐条写入 AI_Yitu。
+# [2026-07-04 10:18:20] 作用：声明同步函数 save_intents，封装可复用的处理步骤；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
 def save_intents(
-    # [2026-07-04 10:18:20] 作用：强制关键字参数；理由依据：避免多个 ID 和路径字符串位置错位。
+    # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `*,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     *,
-    # [2026-07-04 10:18:20] 作用：接收意图 JSON 字符串；理由依据：来源为 intent_analysis。
+    # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `analysis: str,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     analysis: str,
-    # [2026-07-04 10:18:20] 作用：接收原始数据 ID；理由依据：每条意图必须关联本次转录。
+    # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `raw_data_id: str | None = None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     raw_data_id: str | None = None,
-    # [2026-07-04 10:18:20] 作用：保留来源路径参数；理由依据：兼容原执行链签名且不重复写入意图表。
+    # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `source_file_path: str | None = None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     source_file_path: str | None = None,
-    # [2026-07-04 10:18:20] 作用：保留文件类型参数；理由依据：来源类型已在原始表保存。
+    # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `file_type: str | None = None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     file_type: str | None = None,
-    # [2026-07-04 10:18:20] 作用：接收企业 ID；理由依据：当前无企业上下文时保存 NULL。
+    # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `gs_id: str | None = None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     gs_id: str | None = None,
-    # [2026-07-04 10:18:20] 作用：接收录入用户 ID；理由依据：当前无登录上下文时保存 NULL。
+    # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `in_userid: str | None = None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     in_userid: str | None = None,
-# [2026-07-04 10:18:20] 作用：结束保存入口签名并声明返回 ID 列表；理由依据：API 需按实际 ID 验收。
+# [2026-07-04 10:18:20] 作用：在 save_intents 中执行具体代码片段 `) -> list[str]:`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
 ) -> list[str]:
-    # [2026-07-04 10:18:20] 作用：解析 DeepSeek 意图结果；理由依据：保存前必须取得字段字典。
+    # [2026-07-04 10:18:20] 作用：为 intent_items 构造并保存赋值结果；本行执行 `intent_items = parse_ai_intent_result(analysis)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     intent_items = parse_ai_intent_result(analysis)
-    # [2026-07-04 10:18:20] 作用：验证意图和原始关联均存在；理由依据：禁止生成无来源意图。
+    # [2026-07-04 10:18:20] 作用：在 save_intents 中按条件 `if not intent_items or not raw_data_id:` 选择执行分支；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     if not intent_items or not raw_data_id:
-        # [2026-07-04 10:18:20] 作用：返回空 ID 集合；理由依据：明确表示没有写入记录。
+        # [2026-07-04 10:18:20] 作用：从 save_intents 返回表达式 `return []` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
         return []
-    # [2026-07-04 10:18:20] 作用：创建同步会话工厂；理由依据：保持原项目事务语义。
+    # [2026-07-04 10:18:20] 作用：为 SessionLocal 构造并保存赋值结果；本行执行 `SessionLocal = sessionmaker(bind=sync_engine, class_=Session, expire_on_commit=False)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     SessionLocal = sessionmaker(bind=sync_engine, class_=Session, expire_on_commit=False)
-    # [2026-07-04 10:18:20] 作用：初始化已保存意图 ID；理由依据：响应需返回实际主键。
+    # [2026-07-04 10:18:20] 作用：为 saved_ids 构造并保存赋值结果；本行执行 `saved_ids: list[str] = []`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     saved_ids: list[str] = []
-    # [2026-07-04 10:18:20] 作用：自动管理数据库会话；理由依据：事务结束后释放连接。
+    # [2026-07-04 10:18:20] 作用：在 save_intents 中用 `with SessionLocal() as db:` 管理资源生命周期；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
     with SessionLocal() as db:
-        # [2026-07-04 10:18:20] 作用：开始意图批量事务；理由依据：任一条失败时整批回滚。
+        # [2026-07-04 10:18:20] 作用：在 save_intents 中用 `try:` 控制异常处理或资源清理；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
         try:
-            # [2026-07-04 10:18:20] 作用：逐条处理意图项；理由依据：一个对话可包含多个独立意图。
+            # [2026-07-04 10:18:20] 作用：在 save_intents 中通过 `for item in intent_items:` 迭代处理数据；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
             for item in intent_items:
-                # [2026-07-04 10:18:20] 作用：生成意图 UUID7；理由依据：每条意图需要唯一主键。
+                # [2026-07-04 10:18:20] 作用：为 intent_id 构造并保存赋值结果；本行执行 `intent_id = generate_uuid7_id()`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                 intent_id = generate_uuid7_id()
-                # [2026-07-04 10:18:20] 作用：构造完整意图记录；理由依据：字段真值表要求所有列显式赋值。
+                # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `record = ErpYitu(`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                 record = ErpYitu(
-                    # [2026-07-04 10:18:20] 作用：写入意图 UUID7；理由依据：形成复合主键第一部分。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `yt_id=intent_id,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     yt_id=intent_id,
-                    # [2026-07-04 10:18:20] 作用：写入原始数据 ID；理由依据：形成复合主键第二部分并关联全文。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `Yssj_id=raw_data_id,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     Yssj_id=raw_data_id,
-                    # [2026-07-04 10:18:20] 作用：写入简洁意图名称；理由依据：来源为 DeepSeek intent。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `AI_YiTu=item.get("intent"),`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     AI_YiTu=item.get("intent"),
-                    # [2026-07-04 10:18:20] 作用：写入意图语义说明；理由依据：来源为 DeepSeek description。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `YiTu=item.get("description"),`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     YiTu=item.get("description"),
-                    # [2026-07-04 10:18:20] 作用：写入意图证据原文；理由依据：来源为 DeepSeek evidence。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `BiaoZhu=item.get("evidence"),`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     BiaoZhu=item.get("evidence"),
-                    # [2026-07-04 10:18:20] 作用：写入待审核状态 0；理由依据：新提取意图尚未人工审核。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `ZhuangTai=0,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     ZhuangTai=0,
-                    # [2026-07-04 10:18:20] 作用：显式保存未审核人；理由依据：审核事件尚未发生。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `ZhuangTai_id=None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     ZhuangTai_id=None,
-                    # [2026-07-04 10:18:20] 作用：显式保存未审核时间；理由依据：审核事件尚未发生。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `ZhuangTai_time=None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     ZhuangTai_time=None,
-                    # [2026-07-04 10:18:20] 作用：写入音频时间区间；理由依据：来源为 DeepSeek time。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `ShiJian=item.get("time"),`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     ShiJian=item.get("time"),
-                    # [2026-07-04 10:18:20] 作用：写入企业 ID；理由依据：无企业上下文时保持 NULL。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `gsId=gs_id,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     gsId=gs_id,
-                    # [2026-07-04 10:18:20] 作用：显式保存未删除时间；理由依据：新增记录处于有效状态。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `del_time=None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     del_time=None,
-                    # [2026-07-04 10:18:20] 作用：写入录入用户 ID；理由依据：无登录上下文时保持 NULL。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `in_userid=in_userid,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     in_userid=in_userid,
-                    # [2026-07-04 10:18:20] 作用：写入当前录入时间；理由依据：用于测试窗口和审计。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `in_time=datetime.now(),`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     in_time=datetime.now(),
-                    # [2026-07-04 10:18:20] 作用：显式保存保留列为空；理由依据：原项目无 yima 业务赋值且现有记录均为空。
+                    # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `yima=None,`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                     yima=None,
-                # [2026-07-04 10:18:20] 作用：结束意图记录构造；理由依据：形成完整 ORM 实例。
+                # [2026-07-04 10:18:20] 作用：为 record 构造并保存赋值结果；本行执行 `)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                 )
-                # [2026-07-04 10:18:20] 作用：把意图记录加入事务；理由依据：等待整批统一提交。
+                # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `db.add(record)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                 db.add(record)
-                # [2026-07-04 10:18:20] 作用：记录已生成意图 ID；理由依据：提交成功后返回给 API。
+                # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `saved_ids.append(intent_id)`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
                 saved_ids.append(intent_id)
-            # [2026-07-04 10:18:20] 作用：提交意图批量事务；理由依据：确保所有字段一次落库。
+            # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `db.commit()`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
             db.commit()
-            # [2026-07-04 10:18:20] 作用：返回意图 ID 列表；理由依据：调用方需按 ID 核验数据库行。
+            # [2026-07-04 10:18:20] 作用：从 save_intents 返回表达式 `return saved_ids` 的结果；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
             return saved_ids
-        # [2026-07-04 10:18:20] 作用：捕获任意意图入库异常；理由依据：禁止部分成功造成数据不一致。
+        # [2026-07-04 10:18:20] 作用：在 save_intents 中用 `except Exception:` 控制异常处理或资源清理；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
         except Exception:
-            # [2026-07-04 10:18:20] 作用：回滚意图事务；理由依据：维护整批一致性。
+            # [2026-07-04 10:18:20] 作用：完善 同步函数 save_intents 的签名或多行表达式片段 `db.rollback()`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
             db.rollback()
-            # [2026-07-04 10:18:20] 作用：重新抛出真实异常；理由依据：API 不得伪造成功。
+            # [2026-07-04 10:18:20] 作用：在 save_intents 中执行具体代码片段 `raise`；理由依据：源模块 app.services.ai.knowledge.intent_service 仅服务 DeepSeek 提取入库链，按业务边界保留在专属目录；本行位于同步函数 save_intents
             raise
