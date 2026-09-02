@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "version": "KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260902_1534",
+  "generated_at": "2026-09-02T15:34:17+08:00",
+  "scope": "replace_powershell_51_unsafe_docker_label_go_template_with_structured_inspect_json_while_preserving_network_endpoint_lifecycle",
+  "supersedes": "KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260902_1447",
+  "payload_files": 14,
+  "business_parsing_files_changed": 0,
+  "business_extraction_files_changed": 0,
+  "database_queue_worker_files_changed": 0,
+  "first_stack_network_profile_changed": false,
+  "second_stack_commercial_subnet": "10.253.233.0/24",
+  "second_stack_commercial_gateway": "10.253.233.1",
+  "commercial_launcher_sha256": "3AD843099292A2301F2540EFF4C31C5AFE539E4857AF70D6D29FBBF56FD1FFE9",
+  "first_stack_fixed_wrapper_sha256": "313EC14A8A6B3BD5DA648C9FF0C18EF16F0B633441E9E6A8004D7D1F02EEA7AD",
+  "second_stack_fixed_wrapper_sha256": "334F0AB9D0B7089CFFF4C48F34CC57C2E2AE6661CB519A852885BD4A02D70DA3",
+  "wheelhouse_manifest_files": 671,
+  "knowledge_wheels": 193,
+  "knowledge_wheelhouse_manifest_sha256": "FF3B28854361A85A260F39E3CF7205592E37D684B47CD4C4A7F742AB120FE66F",
+  "component_validation": {
+    "launcher_regression": "35/35",
+    "powershell_ast": "windows_powershell_5_1",
+    "added_line_comment_audit": "passed",
+    "network_endpoint_lifecycle_runtime": "Windows PowerShell 5.1 native argv probe reproduced stripped quotes and Docker template function com failure; fixed wrapper reads full inspect JSON and resolves dotted Compose label structurally; network arrays are flattened; 172.20.0.0/16 yields recreate=true; migrated database endpoint cleanup retains running healthy state, private network and bilateral post-read",
+    "first_stack_runtime_baseline": "one-click exit 0; 26/26 final health; 4/4 Knowledge HTTP 200; real file upload not repeated",
+    "payload_business_boundary": "installer writes only the 14 manifest paths; parsing, extraction, database, queue and worker business source excluded",
+    "wheelhouse_hash": "671/671"
+  },
+  "known_unrelated_gate": "global legacy comment suite remains 7 failed and 3 passed outside this change",
+  "target_acceptance_required": [
+    "ValidateOnly READY with 14 payload files",
+    "ServicesStarted=true",
+    "CommercialNetworkSubnet=10.253.233.0/24",
+    "PgBouncer healthy",
+    "SELECT/**/1 returns 1",
+    "LLM Worker /models returns 200",
+    "four HTTP health endpoints return 200",
+    "33 listeners",
+    "real Knowledge WebUI request"
+  ]
+}

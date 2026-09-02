@@ -1,0 +1,72 @@
+[
+  {
+    "relative_path": "app\\SQL_RAG\\start-latest-full-stack.ps1",
+    "bytes": 392681,
+    "sha256": "9b3297ebad0d53ca2f0d6214f2e67ec5b1497c3b74ef45f677036a3e7fefc523"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\tools\\backup_sql_rag_runtime.ps1",
+    "bytes": 16125,
+    "sha256": "cf8421f8b0839fdea2bc50c5ec3830cae0d6e13ba31ea19b0792b227f01be8b7"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\Knowledge_management\\webui\\src\\nasJobService.mjs",
+    "bytes": 19545,
+    "sha256": "c05f5dbfb26497692113e084d43723bb682260b43d82ce2945de4c2f66b4140f"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\Knowledge_management\\backend\\large-scale_commercialization_upgrade\\until\\Start-KnowledgeCommercialServices.ps1",
+    "bytes": 149365,
+    "sha256": "3ad843099292a2301f2540eff4c31c5afe539e4857af70d6d29fbbf56fd1ffe9"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\windows_workstation\\server-second-ports-profile.json",
+    "bytes": 2649,
+    "sha256": "9ab1393dff8dcdeb2622735f163f7a57ccd7eb3d5b80b1d7d898261003aca75d"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\knowledge-requirements.lock.txt",
+    "bytes": 3795,
+    "sha256": "ff4a7087ab10244843eb269e23237e995b4f2eafcea781374fee9b1659f23e73"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\wheelhouse-metadata.json",
+    "bytes": 634,
+    "sha256": "5f54412a598ac34b5785ebf7ff5b7d6724298d655c163cfb6d312b3e0e22cb1e"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\SHA256SUMS.json",
+    "bytes": 124997,
+    "sha256": "ff3b28854361a85a260f39e3cf7205592e37d684b47cd4c4a7f742ab120fe66f"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\knowledge\\minio-7.2.16-py3-none-any.whl",
+    "bytes": 95750,
+    "sha256": "9288ab988ca57c181eb59a4c96187b293131418e28c164392186c2b89026b223"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\knowledge\\argon2_cffi-25.1.0-py3-none-any.whl",
+    "bytes": 14657,
+    "sha256": "fdc8b074db390fccb6eb4a3604ae7231f219aa669a2652e0f20e16ba513d5741"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\knowledge\\argon2_cffi_bindings-25.1.0-cp39-abi3-win_amd64.whl",
+    "bytes": 31715,
+    "sha256": "a98cd7d17e9f7ce244c0803cad3c23a7d379c301ba618a5fa76a67d116618b98"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\knowledge\\cffi-2.1.0-cp313-cp313-win_amd64.whl",
+    "bytes": 185717,
+    "sha256": "8e74a6135550c4748af665b1b1118b6aab33b1fc6a16f9aff630af107c3b4512"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\knowledge\\pycparser-3.0-py3-none-any.whl",
+    "bytes": 48172,
+    "sha256": "b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992"
+  },
+  {
+    "relative_path": "app\\SQL_RAG\\deployment\\alicloud_win11_migration\\artifacts\\wheelhouse\\knowledge\\pycryptodome-3.23.0-cp37-abi3-win_amd64.whl",
+    "bytes": 1799636,
+    "sha256": "c75b52aacc6c0c260f204cbdd834f76edc9fb0d8e0da9fbf8352ef58202564e2"
+  }
+]
