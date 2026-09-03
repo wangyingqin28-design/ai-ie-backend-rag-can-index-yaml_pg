@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "release_tag": "sqlrag-second-stack-success-baseline-20260903",
+  "repository": "wangyingqin28-design/ai-ie-backend-rag-can-index-yaml_pg",
+  "profile": "server_second_ports",
+  "target": "172.18.1.233",
+  "cold_reboot_repeat": "pending",
+  "assets": [
+    {
+      "name": "KM_SECOND_SERVER_FULL_SOURCE_SYNC_20260831_163555.zip",
+      "bytes": 1003030779,
+      "sha256": "0D54F17BD1AEA1AB9BED1B53C84103BED283D7FD4888378FADB74969151A62F8",
+      "delivery": "github_release_asset"
+    },
+    {
+      "name": "KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260902_1534.zip",
+      "bytes": 2366827,
+      "sha256": "AF8B69671450E984DDD28411C4DE43EC9960D3DE5670D0AFF26D4BDF27B55EE7",
+      "delivery": "git_tree_and_github_release_asset"
+    },
+    {
+      "name": "KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260903_EGRESS_PROXY_R2.zip",
+      "bytes": 2364393,
+      "sha256": "940704C648630DBB7067F1FCEC871F100A4B2A14531F1ECE3DC94BEF5825287E",
+      "delivery": "git_tree_and_github_release_asset"
+    }
+  ],
+  "business_logic_files_changed_by_r2": 0
+}

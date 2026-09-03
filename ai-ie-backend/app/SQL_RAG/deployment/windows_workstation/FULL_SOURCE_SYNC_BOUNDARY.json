@@ -1,0 +1,26 @@
+﻿{
+    "schema_version":  1,
+    "sync_kind":  "first_set_business_and_deployment_logic_to_second_server",
+    "source_root":  "D:\\wkt\\ai-ie-backend-feature-rag-new (1)\\ai-ie-backend\\app\\SQL_RAG",
+    "source_file_count":  773,
+    "payload_file_count":  774,
+    "copied_logic":  "all SQL_RAG source/config/scripts/static files except mutable runtime, secrets, snapshots, models, virtual environments and installer staging",
+    "preserved_target_differences":  [
+                                         "server-second-ports-profile.json is validated as server_second_ports with 33 ports and 172.18.1.233 URLs",
+                                         "commercial_runtime_mode is source_build: no VPN is required, internet is allowed for the same on-demand build path as the first set",
+                                         "nas-integration.server.json callback remains on 172.18.1.233:28320",
+                                         "target .env, private keys, Docker volumes, databases and runtime object directories are never included"
+                                     ],
+    "overlay_image":  {
+                          "name":  "knowledge-commercial-cache-gateway-20260831.tar",
+                          "bytes":  991788032,
+                          "sha256":  "dd9901c217a5e9d2a61280ba0cceeba7dcb6910f3d181a5d26e1ffbb516fd504"
+                      },
+    "verified_single_image_fallback":  {
+                                           "image":  "sql-rag-knowledge-cache-gateway:commercial",
+                                           "source_contract_files":  8,
+                                           "other_commercial_images_changed":  0,
+                                           "online_build_remains_primary":  true
+                                       },
+    "first_set_logic_not_restarted_by_builder":  true
+}

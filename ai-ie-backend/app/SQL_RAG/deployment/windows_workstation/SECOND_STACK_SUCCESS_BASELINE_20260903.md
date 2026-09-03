@@ -2,7 +2,7 @@
 
 日期：2026-09-03
 部署包代码基线：`2bd3c7ed7754891df869bb6904a9e626117476ae`
-成功记录提交：`8f4af27a14347aecbf2cef971c70e1d2cf5268cc`
+成功记录提交：`b66162fbb26c111b4c015cc614d8bcc4ed99db14`
 成功标签：`sqlrag-second-stack-webui-success-baseline-20260903`
 修复包：`KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260903_EGRESS_PROXY_R2`
 固定 profile：`server_second_ports`，目标：`172.18.1.233`
