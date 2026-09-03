@@ -107,8 +107,8 @@ function Get-KmEgressProxyContract {
   if($noProxyValues.Count-eq0){throw '第二套出口代理 NO_PROXY 集合为空。'}
   # [2026-09-03 11:14:29] 作用：验证内部绕行值字符；理由依据：Compose 环境值只允许主机、网段和通配符，不允许换行或命令字符。
   foreach($noProxyValue in $noProxyValues){if($noProxyValue-notmatch'^[A-Za-z0-9.*:_/-]+$'){throw "第二套出口代理 NO_PROXY 值无效：$noProxyValue"}}
-  # [2026-09-03 11:14:29] 作用：返回完整出口代理合同；理由依据：调用方统一消费已验证 URL、候选、服务和绕行集合。
-  return [pscustomobject]@{ProbeUrl=$probeUrl;Candidates=@($candidates);WorkerServices=$expectedWorkerServices;NoProxy=($noProxyValues-join',')}
+  # [2026-09-03 14:31:49] 作用：逐项展开泛型候选列表后返回完整出口代理合同；理由依据：Windows PowerShell 5.1 对泛型 List 的隐式数组展开会触发 Argument types do not match。
+  return [pscustomobject]@{ProbeUrl=$probeUrl;Candidates=@($candidates|ForEach-Object{$_});WorkerServices=$expectedWorkerServices;NoProxy=($noProxyValues-join',')}
 }
 
 # [2026-09-03 13:26:00] 作用：通过 .NET 进程向 Docker stdin 写入多行探针；理由依据：PowerShell 管道向原生 Docker 的 stdin 在当前运行时可能为空，不能把空脚本的 exit=0 当作网络证据。
