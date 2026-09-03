@@ -99,8 +99,8 @@ function Get-KmEgressProxyContract {
   $workerServices=@($egress.worker_services|ForEach-Object{([string]$_).Trim()}|Where-Object{$_})
   # [2026-09-03 11:14:29] 作用：声明唯一允许注入代理的服务；理由依据：避免把外部出口环境扩散到 RabbitMQ、Redis、MinIO、持久化或索引服务。
   $expectedWorkerServices=@('km-worker-llm','km-worker-asr','km-worker-vision')
-  # [2026-09-03 11:14:29] 作用：比较 profile 服务集合；理由依据：代理注入范围必须精确固定为三个模型 Worker。
-  if(($workerServices|Sort-Object)-join',' -ne($expectedWorkerServices|Sort-Object)-join','){throw "第二套出口代理 Worker 集合无效：$($workerServices-join',')"}
+  # [2026-09-03 13:40:21] 作用：分别将实际和期望 Worker 集合排序连接后再比较；理由依据：PowerShell 的 -join 与 -ne 优先级混合会误判合法的集合顺序。
+  if((($workerServices|Sort-Object)-join',') -ne (($expectedWorkerServices|Sort-Object)-join',')){throw "第二套出口代理 Worker 集合无效：$($workerServices-join',')"}
   # [2026-09-03 11:14:29] 作用：读取内部绕行主机集合；理由依据：代理只能承载外部模型请求，商业私网和迁移数据库必须保持直连。
   $noProxyValues=@($egress.no_proxy|ForEach-Object{([string]$_).Trim()}|Where-Object{$_})
   # [2026-09-03 11:14:29] 作用：阻断空内部绕行集合；理由依据：缺少 NO_PROXY 会把内部队列和数据库请求错误送往外部代理。
