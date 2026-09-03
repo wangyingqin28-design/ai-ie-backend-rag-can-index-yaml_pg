@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "profile_name": "server_second_ports",
+  "description": "新采购 Windows 工作站服务器独立运行合同。此文件不包含、引用或继承本地第一套 profile。",
+  "lan_ip": "172.18.1.233",
+  "trusted_cidr": "172.18.1.0/24",
+  "minio_endpoint": "172.18.1.249:9000",
+  "minio_public_endpoint": "172.18.1.249:9000",
+  "commercial_runtime_mode": "source_build",
+  "portal_web_origins": [
+    "http://mofang.bao1998.com",
+    "https://mofang.bao1998.com"
+  ],
+  "frontend_mounts": {
+    "scheme": "http",
+    "gateway_service": "asset_web",
+    "asset_path": "/resourceType/",
+    "knowledge_path": "/knowledgeManagement/"
+  },
+  "docker": {
+    "backend": "desktop",
+    "engine_endpoint": "npipe:////./pipe/docker_engine_linux",
+    "compose_project": "sql_rag_server",
+    "container_name_prefix": "sql-rag-server",
+    "internal_network": "monfangai-sql-rag-server-internal",
+    "commercial_network": {
+      "subnet": "10.253.233.0/24",
+      "gateway": "10.253.233.1"
+    },
+    "egress_proxy": {
+      "probe_url": "https://api.siliconflow.cn/v1/models",
+      "candidates": [
+        {
+          "name": "docker_desktop_proxy_gateway",
+          "url": "http://192.168.65.7:3128"
+        },
+        {
+          "name": "docker_desktop_gateway_1",
+          "url": "http://192.168.65.1:3128"
+        },
+        {
+          "name": "docker_desktop_gateway_2",
+          "url": "http://192.168.65.2:3128"
+        },
+        {
+          "name": "http_docker_internal",
+          "url": "http://http.docker.internal:3128"
+        },
+        {
+          "name": "host_docker_internal",
+          "url": "http://host.docker.internal:3128"
+        }
+      ],
+      "worker_services": [
+        "km-worker-llm",
+        "km-worker-asr",
+        "km-worker-vision"
+      ],
+      "no_proxy": [
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "host.docker.internal",
+        "km-rabbit-1",
+        "km-rabbit-2",
+        "km-rabbit-3",
+        "km-redis-cluster",
+        "km-celery-result",
+        "km-cache-gateway",
+        "km-panorama-cache-gateway",
+        "km-minio-1",
+        "km-pgbouncer",
+        "sql-rag-server-migrated-source-postgres",
+        "172.18.1.0/24",
+        "10.253.233.0/24"
+      ]
+    },
+    "migration_compose_project": "sql-rag-server-migrated-source"
+  },
+  "data": {
+    "clone_refresh_mode": "portable_seed_only"
+  },
+  "ports": {
+    "embedding_model": 28001,
+    "qwen_model": 28002,
+    "business_backend": 28182,
+    "business_web": 28183,
+    "asset_backend": 28190,
+    "asset_web": 28191,
+    "knowledge_backend": 28320,
+    "knowledge_web": 28321,
+    "knowledge_cache_gateway": 28640,
+    "knowledge_minio_api": 28650,
+    "knowledge_minio_console": 28651,
+    "knowledge_tusd": 28660,
+    "knowledge_rabbitmq_amqp": 28672,
+    "knowledge_rabbitmq_management": 28673,
+    "knowledge_flower": 28674,
+    "knowledge_prometheus": 28675,
+    "knowledge_grafana": 28676,
+    "knowledge_pgbouncer": 28677,
+    "knowledge_panorama_cache": 28678,
+    "dashboard_backend": 28430,
+    "dashboard_web": 28431,
+    "getsoft_api": 28520,
+    "main_sqlserver": 11433,
+    "external_sqlserver": 24333,
+    "migrated_postgres": 25434,
+    "main_qdrant_http": 16333,
+    "external_qdrant_http": 16334,
+    "clone_qdrant_http": 16335,
+    "clone_qdrant_grpc": 16336,
+    "neo4j_http": 17474,
+    "neo4j_bolt": 17687,
+    "langgraph_postgres": 25432,
+    "clone_postgres": 25433
+  },
+  "public_web_services": [
+    "business_web",
+    "asset_web",
+    "knowledge_web",
+    "dashboard_web",
+    "getsoft_api"
+  ],
+  "trusted_qdrant_services": [
+    "main_qdrant_http",
+    "external_qdrant_http",
+    "clone_qdrant_http",
+    "clone_qdrant_grpc"
+  ],
+  "trusted_relational_database_services": [
+    "main_sqlserver",
+    "external_sqlserver",
+    "migrated_postgres",
+    "langgraph_postgres",
+    "clone_postgres"
+  ]
+}

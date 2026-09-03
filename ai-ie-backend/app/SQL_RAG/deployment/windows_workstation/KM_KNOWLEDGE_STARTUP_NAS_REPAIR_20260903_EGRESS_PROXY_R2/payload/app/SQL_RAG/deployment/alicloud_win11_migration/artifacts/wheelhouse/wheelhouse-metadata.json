@@ -1,0 +1,23 @@
+﻿[
+    {
+        "name":  "root",
+        "python_version":  "Python 3.13.9",
+        "requirement_count":  217,
+        "wheel_count":  217,
+        "lock_file":  "root-requirements.lock.txt"
+    },
+    {
+        "name":  "knowledge",
+        "python_version":  "Python 3.13.9",
+        "requirement_count":  193,
+        "wheel_count":  193,
+        "lock_file":  "knowledge-requirements.lock.txt"
+    },
+    {
+        "name":  "getsoft",
+        "python_version":  "Python 3.13.9",
+        "requirement_count":  257,
+        "wheel_count":  257,
+        "lock_file":  "getsoft-requirements.lock.txt"
+    }
+]

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "version": "KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260903_EGRESS_PROXY_R2",
+  "generated_at": "2026-09-03T07:02:28.9730991Z",
+  "scope": "second_stack_docker_egress_proxy_preflight_and_model_worker_override",
+  "supersedes": "KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260903_EGRESS_PROXY_R1",
+  "baseline_commit": "fcdfd2cc29e5c59aad87d988eb8ff9e0d086a085",
+  "baseline_tag": "sqlrag-second-stack-1534-build-data-network-baseline-20260902",
+  "payload_files": 14,
+  "business_parsing_files_changed": 0,
+  "business_extraction_files_changed": 0,
+  "database_queue_worker_files_changed": 0,
+  "first_stack_network_profile_changed": false,
+  "second_stack_commercial_subnet": "10.253.233.0/24",
+  "second_stack_commercial_gateway": "10.253.233.1",
+  "commercial_launcher_sha256": "5685D556EF5FDEC2AEFDAFA90C7A84ECA627A88C8FB4DD242E0C401AFAFAD160",
+  "second_stack_profile_sha256": "3DCD37FA81455998193399DADE018329BA945C49CC258377303F7C1D42EBFA8E",
+  "installer_sha256": "172BCDF8D1F06932F8A6AD679D5665770798CBC83A4CFB54ECFDC8C304195F47",
+  "payload_manifest_sha256": "7136C9767B81832CC38C440BEC5A0259474155C466F5414452864855DA0165C6",
+  "baseline_zip_sha256": "AF8B69671450E984DDD28411C4DE43EC9960D3DE5670D0AFF26D4BDF27B55EE7",
+  "full_source_sync_base_sha256": "0D54F17BD1AEA1AB9BED1B53C84103BED283D7FD4888378FADB74969151A62F8",
+  "component_validation": {
+    "launcher_regression": "35/35 inherited launcher regression; R2_PS51_CONTRACT=PASS candidates=5 worker-set order regression passed",
+    "workstation_contract": "READY;33 ports;0 overlap",
+    "powershell_ast": "PS5.1 source, payload, and installer 0 errors",
+    "egress_probe": "PROXY_HTTP_STATUS=401;exit=0 on default and commercial network",
+    "business_boundary": "14 payload paths;parsing/extraction/database/queue/worker source excluded"
+  },
+  "target_acceptance_required": [
+    "ValidateOnly READY with 14 payload files",
+    "ServicesStarted=true",
+    "CommercialNetworkSubnet=10.253.233.0/24",
+    "PgBouncer healthy",
+    "SELECT 1 returns 1",
+    "LLM Worker /models returns 200",
+    "four HTTP health endpoints return 200",
+    "33 listeners",
+    "real Knowledge WebUI request beyond 58% and persisted result",
+    "cold reboot repeat"
+  ]
+}
