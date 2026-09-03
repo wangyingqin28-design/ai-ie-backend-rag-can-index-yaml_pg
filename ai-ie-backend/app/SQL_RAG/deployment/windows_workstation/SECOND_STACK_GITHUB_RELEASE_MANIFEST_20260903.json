@@ -10,7 +10,7 @@
       "name": "KM_SECOND_SERVER_FULL_SOURCE_SYNC_20260831_163555.zip",
       "bytes": 1003030779,
       "sha256": "0D54F17BD1AEA1AB9BED1B53C84103BED283D7FD4888378FADB74969151A62F8",
-      "delivery": "github_release_asset"
+      "delivery": "git_lfs_and_github_release_asset"
     },
     {
       "name": "KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260902_1534.zip",

@@ -1,0 +1,2 @@
+# 2026-09-03: keep the 1GB full-source recovery archive outside normal Git blobs; Git LFS preserves exact bytes for clone recovery.
+ai-ie-backend/app/SQL_RAG/deployment/windows_workstation/KM_SECOND_SERVER_FULL_SOURCE_SYNC_20260831_163555.zip filter=lfs diff=lfs merge=lfs -text

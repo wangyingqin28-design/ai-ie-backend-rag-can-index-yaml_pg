@@ -22,7 +22,7 @@ R2 没有修改解析、提取、提示词、数据库、队列、持久化或 W
 | `KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260902_1534.zip` | 2366827 | `AF8B69671450E984DDD28411C4DE43EC9960D3DE5670D0AFF26D4BDF27B55EE7` |
 | `KM_KNOWLEDGE_STARTUP_NAS_REPAIR_20260903_EGRESS_PROXY_R2.zip` | 2364393 | `940704C648630DBB7067F1FCEC871F100A4B2A14531F1ECE3DC94BEF5825287E` |
 
-1GB 全量源同步包不进入普通 Git 对象，避免 GitHub 单文件限制和仓库膨胀；它会作为同一发布的 Release asset 上传。两个小包和所有源同步边界/清单文件进入 Git 提交。Release asset 与 sidecar 的哈希必须和本表一致。
+1GB 全量源同步包不进入普通 Git blob，避免 GitHub 单文件限制和仓库膨胀；它通过 Git LFS 以同一文件路径纳入专用分支，并同时保留 NAS/Release asset 作为恢复冗余。没有 Git LFS 的机器可从 Release asset 下载。两个小包和所有源同步边界/清单文件进入 Git 提交。任一来源的文件都必须和本表一致。
 
 ## 恢复方式
 
@@ -31,7 +31,7 @@ git clone --branch codex/second-stack-success-baseline-20260903 --single-branch 
 git -C ai-ie-backend-rag-can-index-yaml_pg rev-parse HEAD
 ```
 
-然后从 GitHub Release `sqlrag-second-stack-success-baseline-20260903` 下载全量源同步 ZIP 及其 `.sha256`，在 Windows PowerShell 5.1 中先执行 `Get-FileHash` 比对本表，再按 `README_FIRST_SET_FULL_SOURCE_SYNC_20260831.md`、1534 README、R2 README 的顺序安装。日常重启不重复安装，直接使用固定入口：
+然后执行 `git lfs install` 并确认全量 ZIP 已下载；或者从 GitHub Release `sqlrag-second-stack-success-baseline-20260903` 下载全量源同步 ZIP 及其 `.sha256`。在 Windows PowerShell 5.1 中先执行 `Get-FileHash` 比对本表，再按 `README_FIRST_SET_FULL_SOURCE_SYNC_20260831.md`、1534 README、R2 README 的顺序安装。日常重启不重复安装，直接使用固定入口：
 
 ```powershell
 $ErrorActionPreference='Stop'
