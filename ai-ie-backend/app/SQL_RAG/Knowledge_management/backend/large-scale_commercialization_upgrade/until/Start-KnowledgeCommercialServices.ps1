@@ -46,6 +46,196 @@ function Get-KmPort {
   return $port
 }
 
+# [2026-09-03 11:14:29] 作用：读取并验证第二套容器出口代理合同；理由依据：只有 profile 明确声明的代理候选和内部绕行名单才能进入商业 Worker 环境。
+function Get-KmEgressProxyContract {
+  # [2026-09-03 11:14:29] 作用：接收当前服务 profile；理由依据：第一套 profile 没有出口修复权限且必须保持原 Compose 行为。
+  param([Parameter(Mandatory=$true)]$Profile)
+  # [2026-09-03 11:14:29] 作用：让第一套直接返回未配置状态；理由依据：第二套出口修复不得扩散到 local 或 Alibaba Cloud 入口。
+  if($DeploymentProfile-ne'server_second_ports'){return $null}
+  # [2026-09-03 11:14:29] 作用：读取 Docker profile 属性；理由依据：出口合同必须属于第二套独立 Docker 身份而不是顶层共享配置。
+  $dockerProperty=$Profile.PSObject.Properties['docker']
+  # [2026-09-03 11:14:29] 作用：阻断缺失 Docker profile；理由依据：没有独立 Docker 身份时不能判断代理作用域。
+  if($null-eq$dockerProperty-or$null-eq$dockerProperty.Value){throw '第二套出口代理合同缺少 docker profile。'}
+  # [2026-09-03 11:14:29] 作用：读取出口代理属性；理由依据：目标机必须从版本化 profile 取得代理候选而不能依赖临时用户环境变量。
+  $egressProperty=$dockerProperty.Value.PSObject.Properties['egress_proxy']
+  # [2026-09-03 11:14:29] 作用：阻断缺失出口代理合同；理由依据：容器无可达外部 LLM 时必须在部署层明确失败。
+  if($null-eq$egressProperty-or$null-eq$egressProperty.Value){throw '第二套出口代理合同缺失。'}
+  # [2026-09-03 11:14:29] 作用：保存结构化出口代理对象；理由依据：后续校验和 override 生成必须复用同一事实源。
+  $egress=$egressProperty.Value
+  # [2026-09-03 11:14:29] 作用：读取只读供应商探针 URL；理由依据：候选代理必须实际建立到业务 LLM 供应商的 HTTPS 路径。
+  $probeUrl=([string]$egress.probe_url).Trim()
+  # [2026-09-03 11:14:29] 作用：阻断空白供应商探针 URL；理由依据：空地址会把出口故障伪装成代理配置成功。
+  if([string]::IsNullOrWhiteSpace($probeUrl)){throw '第二套出口代理探针 URL 为空。'}
+  # [2026-09-03 11:14:29] 作用：解析供应商探针 URI；理由依据：字符串前缀不能证明目标是 HTTPS 且没有用户凭据。
+  try{$probeUri=[uri]$probeUrl}catch{throw "第二套出口代理探针 URL 无效：$probeUrl"}
+  # [2026-09-03 11:14:29] 作用：限制探针为 HTTPS 无凭据 URL；理由依据：只读 401/403 也足以证明 TLS 出口，不能把密钥放入 profile。
+  if($probeUri.Scheme-ne'https'-or[string]::IsNullOrWhiteSpace($probeUri.Host)-or-not[string]::IsNullOrWhiteSpace($probeUri.UserInfo)){throw "第二套出口代理探针 URL 必须是无凭据 HTTPS：$probeUrl"}
+  # [2026-09-03 11:14:29] 作用：读取代理候选集合；理由依据：Docker Desktop 网关地址可能在重启后变化，必须保留有序候选而非写死单点。
+  $candidateValues=@($egress.candidates|ForEach-Object{$_})
+  # [2026-09-03 11:14:29] 作用：阻断空代理候选集合；理由依据：没有可验证候选时不能让 Worker 继续无代理超时。
+  if($candidateValues.Count-eq0){throw '第二套出口代理候选为空。'}
+  # [2026-09-03 11:14:29] 作用：初始化已验证代理候选列表；理由依据：后续选择必须保留候选名称、URI 主机和端口的结构化值。
+  $candidates=New-Object 'System.Collections.Generic.List[object]'
+  # [2026-09-03 11:14:29] 作用：逐项验证代理候选字段；理由依据：未经校验的 URL 不能安全写入 Compose YAML 或 Docker 参数。
+  foreach($candidate in $candidateValues){
+    # [2026-09-03 11:14:29] 作用：读取代理候选名称；理由依据：现场日志需要指出实际命中的网关而不输出任何密钥。
+    $candidateName=([string]$candidate.name).Trim()
+    # [2026-09-03 11:14:29] 作用：读取代理候选 URL；理由依据：同一候选 URL 同时用于容器探针和 Worker 环境。
+    $candidateUrl=([string]$candidate.url).Trim()
+    # [2026-09-03 11:14:29] 作用：阻断空白候选字段；理由依据：空值会导致 Docker run 参数和 YAML 合同不确定。
+    if([string]::IsNullOrWhiteSpace($candidateName)-or[string]::IsNullOrWhiteSpace($candidateUrl)){throw '第二套出口代理候选名称或 URL 为空。'}
+    # [2026-09-03 11:14:29] 作用：解析代理候选 URI；理由依据：必须结构化确认 HTTP 代理主机、端口且不含凭据或路径。
+    try{$candidateUri=[uri]$candidateUrl}catch{throw "第二套出口代理候选 URL 无效：$candidateUrl"}
+    # [2026-09-03 11:14:29] 作用：限制代理 URI 形态；理由依据：仅允许无凭据的 HTTP/HTTPS host:port，避免把任意字符串注入 Docker 配置。
+    if($candidateUri.Scheme-notin@('http','https')-or[string]::IsNullOrWhiteSpace($candidateUri.Host)-or$candidateUri.Port-lt1-or$candidateUri.Port-gt65535-or-not[string]::IsNullOrWhiteSpace($candidateUri.UserInfo)-or$candidateUri.AbsolutePath-ne'/'-or-not[string]::IsNullOrWhiteSpace($candidateUri.Query)-or-not[string]::IsNullOrWhiteSpace($candidateUri.Fragment)){throw "第二套出口代理候选必须是无凭据 host:port：$candidateUrl"}
+    # [2026-09-03 11:14:29] 作用：限制代理主机字符；理由依据：当前 Docker Desktop 网关只允许 DNS/IPv4 主机名，禁止控制字符进入 YAML。
+    if($candidateUri.Host-notmatch'^[A-Za-z0-9][A-Za-z0-9._-]*$'){throw "第二套出口代理候选主机无效：$candidateUrl"}
+    # [2026-09-03 11:14:29] 作用：保存已解析的代理候选；理由依据：后续选择不再重新解析 profile 原始文本。
+    [void]$candidates.Add([pscustomobject]@{Name=$candidateName;Url=$candidateUrl;Host=$candidateUri.Host;Port=[int]$candidateUri.Port})
+  }
+  # [2026-09-03 11:14:29] 作用：阻断重复代理候选；理由依据：重复地址会造成无意义探针并掩盖候选顺序证据。
+  if(@($candidates|ForEach-Object{$_.Url}|Sort-Object -Unique).Count-ne$candidates.Count){throw '第二套出口代理候选 URL 重复。'}
+  # [2026-09-03 11:14:29] 作用：读取允许代理绕行的 Worker 服务集合；理由依据：只有 LLM、ASR 和视觉外部模型 Worker 需要代理，其他队列不得改变。
+  $workerServices=@($egress.worker_services|ForEach-Object{([string]$_).Trim()}|Where-Object{$_})
+  # [2026-09-03 11:14:29] 作用：声明唯一允许注入代理的服务；理由依据：避免把外部出口环境扩散到 RabbitMQ、Redis、MinIO、持久化或索引服务。
+  $expectedWorkerServices=@('km-worker-llm','km-worker-asr','km-worker-vision')
+  # [2026-09-03 11:14:29] 作用：比较 profile 服务集合；理由依据：代理注入范围必须精确固定为三个模型 Worker。
+  if(($workerServices|Sort-Object)-join',' -ne($expectedWorkerServices|Sort-Object)-join','){throw "第二套出口代理 Worker 集合无效：$($workerServices-join',')"}
+  # [2026-09-03 11:14:29] 作用：读取内部绕行主机集合；理由依据：代理只能承载外部模型请求，商业私网和迁移数据库必须保持直连。
+  $noProxyValues=@($egress.no_proxy|ForEach-Object{([string]$_).Trim()}|Where-Object{$_})
+  # [2026-09-03 11:14:29] 作用：阻断空内部绕行集合；理由依据：缺少 NO_PROXY 会把内部队列和数据库请求错误送往外部代理。
+  if($noProxyValues.Count-eq0){throw '第二套出口代理 NO_PROXY 集合为空。'}
+  # [2026-09-03 11:14:29] 作用：验证内部绕行值字符；理由依据：Compose 环境值只允许主机、网段和通配符，不允许换行或命令字符。
+  foreach($noProxyValue in $noProxyValues){if($noProxyValue-notmatch'^[A-Za-z0-9.*:_/-]+$'){throw "第二套出口代理 NO_PROXY 值无效：$noProxyValue"}}
+  # [2026-09-03 11:14:29] 作用：返回完整出口代理合同；理由依据：调用方统一消费已验证 URL、候选、服务和绕行集合。
+  return [pscustomobject]@{ProbeUrl=$probeUrl;Candidates=@($candidates);WorkerServices=$expectedWorkerServices;NoProxy=($noProxyValues-join',')}
+}
+
+# [2026-09-03 13:26:00] 作用：通过 .NET 进程向 Docker stdin 写入多行探针；理由依据：PowerShell 管道向原生 Docker 的 stdin 在当前运行时可能为空，不能把空脚本的 exit=0 当作网络证据。
+function Invoke-KmDockerPythonScript {
+  # [2026-09-03 13:26:01] 作用：接收 Docker 参数和待执行 Python 文本；理由依据：所有候选探针必须复用同一无引号歧义的原生进程入口。
+  param([Parameter(Mandatory=$true)][string[]]$Arguments,[Parameter(Mandatory=$true)][string]$Script)
+  # [2026-09-03 13:26:02] 作用：解析 Docker 可执行文件；理由依据：目标管理员环境的 PATH 可能不同，必须使用当前实际 CLI。
+  $dockerCommand=Get-Command docker.exe -ErrorAction Stop
+  # [2026-09-03 13:26:03] 作用：创建不经 shell 的进程启动描述；理由依据：重定向 stdin/stdout/stderr 才能保留真实容器脚本结果。
+  $processStartInfo=New-Object System.Diagnostics.ProcessStartInfo
+  # [2026-09-03 13:26:04] 作用：绑定当前 Docker CLI 路径；理由依据：不能让系统选择另一版本 Docker 覆盖目标 Linux Engine。
+  $processStartInfo.FileName=$dockerCommand.Source
+  # [2026-09-03 13:26:05] 作用：初始化安全的双引号参数集合；理由依据：参数值均已由 profile/调用方限制为无换行、无引号文本。
+  $quotedArguments=New-Object 'System.Collections.Generic.List[string]'
+  # [2026-09-03 13:26:06] 作用：逐项校验并引用 Docker 参数；理由依据：Windows PowerShell 5.1 的 ProcessStartInfo 不支持 ArgumentList，必须显式避免参数拼接注入。
+  foreach($argument in @($Arguments)){
+    # [2026-09-03 13:26:07] 作用：阻断换行或双引号参数；理由依据：这两类字符会改变 Windows 原生命令行边界并破坏 Docker 合同。
+    if(([string]$argument)-match'[\r\n"]'){throw '第二套出口探针 Docker 参数包含非法引号或换行。'}
+    # [2026-09-03 13:26:08] 作用：保存单个双引号参数；理由依据：统一参数边界可兼容 Windows PowerShell 5.1 和 PowerShell 7。
+    [void]$quotedArguments.Add('"'+[string]$argument+'"')
+  }
+  # [2026-09-03 13:26:09] 作用：生成 Docker 原生命令行；理由依据：所有参数已逐项验证，不能再依赖 PowerShell 管道转换。
+  $processStartInfo.Arguments=($quotedArguments-join' ')
+  # [2026-09-03 13:26:10] 作用：关闭 shell 执行；理由依据：Docker 参数和目标 Engine 必须由同一子进程直接接收。
+  $processStartInfo.UseShellExecute=$false
+  # [2026-09-03 13:26:11] 作用：隐藏探针窗口；理由依据：一键启动不应额外弹出控制台，但日志仍需保留在返回对象。
+  $processStartInfo.CreateNoWindow=$true
+  # [2026-09-03 13:26:12] 作用：开启标准输入重定向；理由依据：多行 Python 必须逐字写入容器而不是依赖失真的 PowerShell pipeline。
+  $processStartInfo.RedirectStandardInput=$true
+  # [2026-09-03 13:26:13] 作用：开启标准输出重定向；理由依据：机器可读状态码必须从容器 stdout 提取。
+  $processStartInfo.RedirectStandardOutput=$true
+  # [2026-09-03 13:26:14] 作用：开启标准错误重定向；理由依据：Docker/网络错误不能被 stdout 成功文本掩盖。
+  $processStartInfo.RedirectStandardError=$true
+  # [2026-09-03 13:26:15] 作用：创建可释放的 Docker 子进程对象；理由依据：每个候选和网络探针都必须结束并释放句柄。
+  $process=New-Object System.Diagnostics.Process
+  # [2026-09-03 13:26:16] 作用：绑定进程启动描述；理由依据：后续 Start、stdin 和输出读取必须作用于同一 Docker 调用。
+  $process.StartInfo=$processStartInfo
+  try{
+    # [2026-09-03 13:26:17] 作用：启动 Docker 原生进程；理由依据：只有真实子进程退出码才可作为探针门禁事实。
+    [void]$process.Start()
+    # [2026-09-03 13:26:18] 作用：写入完整多行 Python 探针；理由依据：避免空 stdin 造成无脚本 exit=0 的假结果。
+    $process.StandardInput.Write($Script)
+    # [2026-09-03 13:26:19] 作用：关闭探针 stdin；理由依据：Python 读取到 EOF 后才会执行并退出，避免一直等待输入。
+    $process.StandardInput.Close()
+    # [2026-09-03 13:26:20] 作用：异步读取 stdout；理由依据：同时消费两个输出流以避免 Docker 错误较多时发生管道死锁。
+    $stdoutTask=$process.StandardOutput.ReadToEndAsync()
+    # [2026-09-03 13:26:21] 作用：异步读取 stderr；理由依据：保留 Docker 原生诊断且不阻塞 stdout 消费。
+    $stderrTask=$process.StandardError.ReadToEndAsync()
+    # [2026-09-03 13:26:22] 作用：等待 Docker 进程完成；理由依据：退出码和完整输出必须来自同一次容器执行。
+    $process.WaitForExit()
+    # [2026-09-03 13:26:23] 作用：取得 stdout 任务结果；理由依据：状态行只在进程结束后解析，避免半行误判。
+    $stdout=[string]$stdoutTask.Result
+    # [2026-09-03 13:26:24] 作用：取得 stderr 任务结果；理由依据：失败日志需要与 stdout 一起返回给候选选择器。
+    $stderr=[string]$stderrTask.Result
+    # [2026-09-03 13:26:25] 作用：初始化统一输出集合；理由依据：调用方必须稳定处理空输出、尾换行和双流结果。
+    $output=New-Object 'System.Collections.Generic.List[string]'
+    # [2026-09-03 13:26:26] 作用：逐行加入 stdout；理由依据：供应商状态行按行正则提取且不应携带空白尾项。
+    foreach($line in @($stdout -split "`r?`n")){if(-not[string]::IsNullOrWhiteSpace($line)){[void]$output.Add($line)}}
+    # [2026-09-03 13:26:27] 作用：逐行加入 stderr；理由依据：Docker 错误需保留但仍通过有限输出返回，避免日志无限增长。
+    foreach($line in @($stderr -split "`r?`n")){if(-not[string]::IsNullOrWhiteSpace($line)){[void]$output.Add($line)}}
+    # [2026-09-03 13:26:28] 作用：返回原生退出码和有限输出；理由依据：探针门禁必须同时判断脚本状态、Docker 状态和供应商 HTTP 状态。
+    return [pscustomobject]@{ExitCode=[int]$process.ExitCode;Output=@($output|Select-Object -Last 24)}
+  }finally{
+    # [2026-09-03 13:26:29] 作用：释放 Docker 子进程句柄；理由依据：重复冷启动不能积累原生进程资源。
+    $process.Dispose()
+  }
+}
+
+# [2026-09-03 13:26:30] 作用：在 Docker 容器内验证代理到供应商的 HTTPS；理由依据：宿主或 Docker daemon 的代理字段不能证明业务 Worker 实际可出站。
+function Invoke-KmEgressProxyProbe {
+  # [2026-09-03 11:14:29] 作用：接收已验证的镜像、目标 URL、代理和绕行值；理由依据：探针必须与将写入 Worker 的同一环境完全一致。
+  # [2026-09-03 13:18:00] 作用：接收实际 Docker 网络名；理由依据：default bridge 的出口结果不能替代商业 Worker 网络的真实路由证据。
+  param([Parameter(Mandatory=$true)][string]$Image,[Parameter(Mandatory=$true)][string]$ProbeUrl,[Parameter(Mandatory=$true)][string]$ProxyUrl,[Parameter(Mandatory=$true)][string]$NoProxy,[string]$Network='bridge')
+  # [2026-09-03 13:18:01] 作用：阻断空 Docker 网络名；理由依据：空值会让探针落到 Docker 默认网络并伪造商业网络通过结果。
+  if([string]::IsNullOrWhiteSpace($Network)){throw '第二套出口代理探针 Docker 网络为空。'}
+  # [2026-09-03 11:14:29] 作用：定义无凭据 Python HTTPS 探针；理由依据：显式 ProxyHandler 可区分代理通路与环境继承，并接受供应商 200/401/403。
+  $probeScript=@'
+# Import the standard HTTPS probe modules; the worker image already contains Python.
+import os, urllib.error, urllib.request
+# Read the read-only target and proxy supplied by the launcher.
+target = os.environ["KM_EGRESS_PROBE_URL"]
+proxy = os.environ["HTTPS_PROXY"]
+# Build an explicit HTTP/HTTPS proxy handler.
+handler = urllib.request.ProxyHandler({"http": proxy, "https": proxy})
+# Build an opener that does not inherit a host-wide proxy.
+opener = urllib.request.build_opener(handler)
+# Create an unauthenticated read-only models request.
+request = urllib.request.Request(target, headers={"User-Agent": "SQLRAG-233-egress-preflight"})
+# Initialize the provider status.
+status = 0
+# Execute a bounded HTTPS request so an unreachable proxy fails before startup.
+try:
+    # Keep only the status code and never print a response body or secret.
+    with opener.open(request, timeout=20) as response:
+        status = response.status
+# An authentication rejection still proves the network path.
+except urllib.error.HTTPError as exc:
+    status = exc.code
+# Report the exception type without credentials and fail the probe.
+except Exception as exc:
+    print("PROXY_ERROR_TYPE=" + type(exc).__name__)
+    print("PROXY_ERROR=" + str(exc)[:200])
+    raise SystemExit(21)
+# Emit only the provider HTTP status.
+print("PROXY_HTTP_STATUS=" + str(status))
+# Accept only success or authentication-rejection statuses.
+if status not in (200, 401, 403):
+    raise SystemExit(22)
+'@
+  # [2026-09-03 13:26:31] 作用：声明与实际 Worker 相同的 Docker 探针参数；理由依据：镜像、网络、代理和 NO_PROXY 必须作为一个不可拆分命令执行。
+  $probeArguments=@('run','--rm','--interactive','--pull','never','--network',$Network,'--env',"KM_EGRESS_PROBE_URL=$ProbeUrl",'--env',"HTTP_PROXY=$ProxyUrl",'--env',"HTTPS_PROXY=$ProxyUrl",'--env','ALL_PROXY=','--env',"NO_PROXY=$NoProxy",'--entrypoint','python',$Image,'-')
+  # [2026-09-03 13:26:32] 作用：通过显式 stdin 进程执行容器探针；理由依据：PowerShell 原生管道可能不传递多行脚本，必须保留真实输出和退出码。
+  $probeExecution=Invoke-KmDockerPythonScript -Arguments $probeArguments -Script $probeScript
+  # [2026-09-03 13:26:33] 作用：提取容器探针输出；理由依据：候选选择器需要同时读取供应商状态行和 Docker 诊断行。
+  $probeOutput=@($probeExecution.Output)
+  # [2026-09-03 13:26:34] 作用：保存容器探针原生退出码；理由依据：输出归一化或后续候选循环不能覆盖 Docker 失败事实。
+  $probeExitCode=[int]$probeExecution.ExitCode
+  # [2026-09-03 11:14:29] 作用：提取非密钥供应商状态；理由依据：代理选择只依赖明确状态码而不依赖任意文本。
+  $statusLine=[string](@($probeOutput|Where-Object{[string]$_-match'^PROXY_HTTP_STATUS='}|Select-Object -Last 1)-join'')
+  # [2026-09-03 11:14:29] 作用：规范化探针状态值；理由依据：返回对象需要稳定比较而不是依赖 PowerShell 数组类型。
+  $probeStatus=if($statusLine-match'^PROXY_HTTP_STATUS=(\d+)$'){[int]$Matches[1]}else{0}
+  # [2026-09-03 11:14:29] 作用：计算候选代理是否通过；理由依据：必须同时满足 Docker 退出码和供应商允许状态。
+  $probePassed=($probeExitCode-eq0-and$probeStatus-in@(200,401,403))
+  # [2026-09-03 11:14:29] 作用：返回候选探针结构化证据；理由依据：调用方需要继续尝试下一个候选并保留首个失败原因。
+  return [pscustomobject]@{Passed=$probePassed;ExitCode=$probeExitCode;Status=$probeStatus;Output=@($probeOutput|Select-Object -Last 12)}
+}
+
 # [2026-09-01 17:23:10] 作用：把 IPv4 CIDR 转换为可比较的无符号起止地址；理由依据：第二套固定商业网段必须在任何容器变更前与 Windows 路由和全部 Docker 网络做精确重叠检查。
 function ConvertTo-KmIpv4CidrRange {
   # [2026-09-01 17:23:10] 作用：接收待验证的 IPv4 CIDR 与证据标签；理由依据：失败信息必须指出来自 profile、Windows 路由还是 Docker 网络。
@@ -746,6 +936,120 @@ else{
   # [2026-08-18 15:21:08] 作用：阻断PgBouncer增量构建失败；理由依据：连接池与业务数据库合同必须保持同版本。
   if(($null-eq$pgbouncerImageCreatedUtc-or$pgbouncerNewestUtc-gt$pgbouncerImageCreatedUtc)-and$LASTEXITCODE-ne0){throw "商业知识 PgBouncer 构建失败，exit=$LASTEXITCODE"}
 }
+# [2026-09-03 11:14:29] 作用：初始化出口代理运行证据；理由依据：第一套未配置出口修复时也必须输出确定的未配置状态。
+$egressProxyName='not_configured';$egressProxyUrl='';$egressProxyStatus='not_checked';$egressOverridePath=$null;$egressOverrideHash='not_configured'
+# [2026-09-03 11:14:29] 作用：读取当前第二套出口代理合同；理由依据：只有独立 profile 才允许为模型 Worker 追加运行时网络覆盖。
+$egressProxyContract=Get-KmEgressProxyContract -Profile $ServicePortProfile
+# [2026-09-03 11:14:29] 作用：在商业容器变更前选择真实可达的代理；理由依据：每次冷启动都必须从容器视角确认外部 LLM 出口，而不是复用过期环境变量。
+if($null-ne$egressProxyContract){
+  # [2026-09-03 11:14:29] 作用：从已展开 Compose 读取实际 Worker 镜像；理由依据：探针必须运行在与三类业务 Worker 相同的依赖镜像内。
+  $egressWorkerServiceProperty=$expandedCompose.services.PSObject.Properties['km-worker-llm']
+  # [2026-09-03 11:14:29] 作用：阻断无法确定 Worker 镜像的状态；理由依据：不能用不同镜像的网络结果替代真实 LLM Worker 出口。
+  if($null-eq$egressWorkerServiceProperty){throw '第二套出口代理探针找不到 km-worker-llm Compose 服务。'}
+  # [2026-09-03 11:14:29] 作用：读取 LLM Worker 镜像标签；理由依据：Compose 展开结果是 Docker 将实际消费的唯一镜像事实。
+  $egressProbeImage=([string]$egressWorkerServiceProperty.Value.image).Trim()
+  # [2026-09-03 11:14:29] 作用：阻断空 Worker 镜像标签；理由依据：无镜像身份时禁止启动或选择代理。
+  if([string]::IsNullOrWhiteSpace($egressProbeImage)){throw '第二套出口代理探针 Worker 镜像为空。'}
+  # [2026-09-03 11:14:29] 作用：确认探针镜像已存在于本机；理由依据：冷启动不能为网络探针隐式拉取未经发布清单验证的新镜像。
+  $egressImageInspect=@(& docker.exe image inspect $egressProbeImage 2>&1)
+  # [2026-09-03 11:14:29] 作用：保存镜像检查原生退出码；理由依据：后续候选探针不能把镜像缺失误判成网络不可达。
+  $egressImageInspectExitCode=$LASTEXITCODE
+  # [2026-09-03 11:14:29] 作用：阻断缺失探针镜像；理由依据：当前 1534 基线应保留 Worker 镜像，缺失必须先恢复镜像而不是改业务逻辑。
+  if($egressImageInspectExitCode-ne0){throw "第二套出口代理探针镜像不存在：image=$egressProbeImage exit=$egressImageInspectExitCode"}
+  # [2026-09-03 11:14:29] 作用：初始化最后一个候选失败证据；理由依据：所有候选失败时必须报告具体出口状态而不是笼统超时。
+  $egressLastProbe=$null
+  # [2026-09-03 11:14:29] 作用：依次尝试 profile 声明的代理候选；理由依据：Docker Desktop 网关地址可能随重启变化，启动逻辑必须可自选已验证地址。
+  foreach($egressCandidate in @($egressProxyContract.Candidates)){
+    # [2026-09-03 11:14:29] 作用：输出当前候选的非密钥身份；理由依据：现场日志需要可审计选择过程但不能暴露凭据。
+    Write-Host "KNOWLEDGE_COMMERCIAL_EGRESS_PROXY_PROBE candidate=$($egressCandidate.Name) host=$($egressCandidate.Host) port=$($egressCandidate.Port)"
+    # [2026-09-03 11:14:29] 作用：执行容器内供应商 HTTPS 探针；理由依据：只接受真实 Docker bridge 经代理返回的 200/401/403。
+    $egressProbeResult=Invoke-KmEgressProxyProbe -Image $egressProbeImage -ProbeUrl $egressProxyContract.ProbeUrl -ProxyUrl $egressCandidate.Url -NoProxy $egressProxyContract.NoProxy -Network 'bridge'
+    # [2026-09-03 11:14:29] 作用：保存最近候选探针结果；理由依据：最终失败诊断必须保留退出码、HTTP 状态和有限输出。
+    $egressLastProbe=[pscustomobject]@{Candidate=$egressCandidate;Result=$egressProbeResult}
+    # [2026-09-03 11:14:29] 作用：锁定首个通过的代理候选；理由依据：后续 override 和实际 Worker 必须使用同一个已经证明的 URL。
+    if($egressProbeResult.Passed){$egressProxyName=$egressCandidate.Name;$egressProxyUrl=$egressCandidate.Url;$egressProxyStatus=[string]$egressProbeResult.Status;break}
+    # [2026-09-03 11:14:29] 作用：记录候选失败但继续尝试；理由依据：单个 Docker 网关失效不应掩盖其他 profile 候选的可用性。
+    Write-Warning "第二套出口代理候选未通过：candidate=$($egressCandidate.Name) exit=$($egressProbeResult.ExitCode) status=$($egressProbeResult.Status) output=$(($egressProbeResult.Output)-join' | ')"
+  }
+  # [2026-09-03 11:14:29] 作用：阻断全部代理候选失败；理由依据：没有经容器验证的外部出口时继续启动会再次把真实任务卡在 58%。
+  if([string]::IsNullOrWhiteSpace($egressProxyUrl)){throw "第二套容器外部 LLM 出口未通过：last_candidate=$($egressLastProbe.Candidate.Name) exit=$($egressLastProbe.Result.ExitCode) status=$($egressLastProbe.Result.Status) output=$(($egressLastProbe.Result.Output)-join' | ')"}
+  # [2026-09-03 11:14:29] 作用：转义将写入 YAML 的代理值；理由依据：即使未来候选扩展，也不能让引号改变 Compose 结构。
+  $egressProxyYamlValue=$egressProxyUrl.Replace("'","''")
+  # [2026-09-03 11:14:29] 作用：转义将写入 YAML 的内部绕行值；理由依据：NO_PROXY 必须作为一个稳定逗号列表传入每个模型 Worker。
+  $egressNoProxyYamlValue=$egressProxyContract.NoProxy.Replace("'","''")
+  # [2026-09-03 11:14:29] 作用：初始化第二套出口 Compose override 行集合；理由依据：基础商业 Compose 和第一套文件保持逐字不变。
+  $egressOverrideLines=New-Object 'System.Collections.Generic.List[string]'
+  # [2026-09-03 11:14:29] 作用：声明 override 的 services 根；理由依据：Compose 合并只需覆盖选定 Worker 的 environment 映射。
+  [void]$egressOverrideLines.Add('services:')
+  # [2026-09-03 11:14:29] 作用：逐个生成模型 Worker 的代理环境覆盖；理由依据：LLM、ASR、视觉是已证实的外部模型调用边界。
+  foreach($egressWorkerService in @($egressProxyContract.WorkerServices)){
+    # [2026-09-03 11:14:29] 作用：写入当前 Worker 服务键；理由依据：环境覆盖必须精确命中 Compose 服务名。
+    [void]$egressOverrideLines.Add("  $egressWorkerService`:")
+    # [2026-09-03 11:14:29] 作用：声明当前 Worker 的环境映射；理由依据：Compose map merge 可覆盖 env_file 中的漂移代理值。
+    [void]$egressOverrideLines.Add('    environment:')
+    # [2026-09-03 12:08:00] 作用：注入标准大写 HTTP 代理；理由依据：Python/OpenAI/urllib 的环境代理合同使用该标准变量名，且避免 PowerShell 5.1 回读重复大小写键。
+    [void]$egressOverrideLines.Add("      HTTP_PROXY: '$egressProxyYamlValue'")
+    # [2026-09-03 12:08:00] 作用：注入标准大写 HTTPS 代理；理由依据：SiliconFlow HTTPS 请求必须沿已验证代理建立 TLS。
+    [void]$egressOverrideLines.Add("      HTTPS_PROXY: '$egressProxyYamlValue'")
+    # [2026-09-03 12:08:00] 作用：清空标准大写 ALL_PROXY；理由依据：SOCKS 或旧全局代理不能抢占已验证 HTTP CONNECT 路径。
+    [void]$egressOverrideLines.Add("      ALL_PROXY: ''")
+    # [2026-09-03 12:08:00] 作用：注入标准大写 NO_PROXY；理由依据：商业私网、迁移数据库和 Docker 内部 DNS 必须绕过外部代理。
+    [void]$egressOverrideLines.Add("      NO_PROXY: '$egressNoProxyYamlValue'")
+  }
+  # [2026-09-03 11:14:29] 作用：定位 profile 专属出口 override 文件；理由依据：重启时可重复生成且不污染源码或第一套运行目录。
+  $egressOverridePath=Join-Path $runtimeRoot 'docker-compose.egress.override.yml'
+  # [2026-09-03 11:14:29] 作用：以 UTF-8 无 BOM 写入出口 override；理由依据：Docker Compose 读取的字节必须跨 Windows PowerShell 版本稳定。
+  [IO.File]::WriteAllText($egressOverridePath,($egressOverrideLines-join"`r`n")+"`r`n",(New-Object Text.UTF8Encoding($false)))
+  # [2026-09-03 11:14:29] 作用：计算出口 override SHA256；理由依据：现场日志需要证明实际消费的环境覆盖没有被运行时篡改。
+  $egressOverrideHash=(Get-FileHash -LiteralPath $egressOverridePath -Algorithm SHA256).Hash.ToLowerInvariant()
+  # [2026-09-03 11:14:29] 作用：把出口 override 加入所有后续 Compose 调用；理由依据：config、start、up、ps 必须共享同一 Worker 网络合同。
+  foreach($egressComposeArgument in @('-f',$egressOverridePath)){[void]$composeCommandArguments.Add([string]$egressComposeArgument)}
+  # [2026-09-03 11:14:29] 作用：重新验证含出口 override 的 Compose 结构；理由依据：生成文件成功不能替代 Docker 对最终合并合同的解析。
+  & docker.exe @composeCommandArguments config --quiet|Out-Host
+  # [2026-09-03 11:14:29] 作用：保存出口 override Compose 解析退出码；理由依据：后续 JSON 读取不能覆盖 Docker 原生失败。
+  $egressComposeConfigExitCode=$LASTEXITCODE
+  # [2026-09-03 11:14:29] 作用：阻断出口 override 语法失败；理由依据：不能让环境覆盖错误推迟到容器创建阶段。
+  if($egressComposeConfigExitCode-ne0){throw "第二套出口代理 Compose override 无法解析：exit=$egressComposeConfigExitCode path=$egressOverridePath"}
+  # [2026-09-03 11:14:29] 作用：读取最终合并 Compose JSON；理由依据：三类 Worker 的代理环境必须从 Docker 实际合并结果验收。
+  $egressComposeJson=(& docker.exe @composeCommandArguments config --format json|Out-String)
+  # [2026-09-03 11:14:29] 作用：保存最终合并 JSON 退出码；理由依据：合法 JSON 不能掩盖 Docker config 失败。
+  $egressComposeJsonExitCode=$LASTEXITCODE
+  # [2026-09-03 11:14:29] 作用：阻断最终合并 JSON 失败；理由依据：无法读取环境事实时不得启动商业容器。
+  if($egressComposeJsonExitCode-ne0){throw "第二套出口代理 Compose 合并 JSON 失败：exit=$egressComposeJsonExitCode"}
+  # [2026-09-03 11:14:29] 作用：解析最终合并 Compose 文档；理由依据：动态属性校验必须基于结构化对象而不是字符串搜索。
+  $egressComposeDocument=$egressComposeJson|ConvertFrom-Json
+  # [2026-09-03 11:14:29] 作用：声明期望的大小写代理环境集合；理由依据：同一代理合同必须覆盖不同 Linux 客户端的读取习惯并清空 ALL_PROXY，且 PowerShell 5.1 哈希表键名不区分大小写。
+  $expectedEgressEnvironment=@(
+    # [2026-09-03 12:02:00] 作用：登记大写 HTTP 代理期望值；理由依据：PowerShell 5.1 不能在同一哈希表中安全保存大小写相同的环境键。
+    [pscustomobject]@{Key='HTTP_PROXY';Value=$egressProxyUrl}
+    # [2026-09-03 12:02:00] 作用：登记大写 HTTPS 代理期望值；理由依据：模型 HTTPS 请求必须沿已验证代理建立 TLS。
+    [pscustomobject]@{Key='HTTPS_PROXY';Value=$egressProxyUrl}
+    # [2026-09-03 12:02:00] 作用：登记大写 ALL_PROXY 清空值；理由依据：旧 SOCKS 或全局代理不得抢占已验证 HTTP CONNECT 路径。
+    [pscustomobject]@{Key='ALL_PROXY';Value=''}
+    # [2026-09-03 12:02:00] 作用：登记大写 NO_PROXY 期望值；理由依据：商业私网和迁移数据库必须绕过外部代理。
+    [pscustomobject]@{Key='NO_PROXY';Value=$egressProxyContract.NoProxy}
+  )
+  # [2026-09-03 11:14:29] 作用：逐个回读三类 Worker 的最终环境；理由依据：只对外部模型边界做覆盖，其他服务不进入验收集合。
+  foreach($egressWorkerService in @($egressProxyContract.WorkerServices)){
+    # [2026-09-03 11:14:29] 作用：读取最终 Compose Worker 属性；理由依据：服务缺失代表 override 没有命中当前商业定义。
+    $egressExpandedServiceProperty=$egressComposeDocument.services.PSObject.Properties[$egressWorkerService]
+    # [2026-09-03 11:14:29] 作用：阻断最终 Worker 服务缺失；理由依据：代理覆盖必须对每一个模型队列生效。
+    if($null-eq$egressExpandedServiceProperty){throw "第二套出口代理 Worker 缺失：service=$egressWorkerService"}
+    # [2026-09-03 11:14:29] 作用：读取最终 Worker environment 映射；理由依据：只检查 Docker 合并后的结构化环境。
+    $egressEnvironmentProperty=$egressExpandedServiceProperty.Value.PSObject.Properties['environment']
+    # [2026-09-03 11:14:29] 作用：阻断最终 Worker 环境映射缺失；理由依据：没有映射时代理变量不会进入容器。
+    if($null-eq$egressEnvironmentProperty){throw "第二套出口代理 Worker 环境缺失：service=$egressWorkerService"}
+    # [2026-09-03 11:14:29] 作用：逐项比较代理和绕行值；理由依据：环境变量任一漂移都会让内部调用或外部 LLM 走错路由。
+    foreach($egressEnvironmentEntry in $expectedEgressEnvironment.GetEnumerator()){
+      # [2026-09-03 11:14:29] 作用：读取单个最终环境属性；理由依据：PowerShell 5.1 对动态属性必须显式访问。
+      $egressActualEnvironmentProperty=$egressEnvironmentProperty.Value.PSObject.Properties[$egressEnvironmentEntry.Key]
+      # [2026-09-03 11:14:29] 作用：阻断单个代理环境缺失或漂移；理由依据：不能以部分注入宣称模型 Worker 出口已修复。
+      if($null-eq$egressActualEnvironmentProperty-or[string]$egressActualEnvironmentProperty.Value-ne[string]$egressEnvironmentEntry.Value){throw "第二套出口代理环境回读失败：service=$egressWorkerService key=$($egressEnvironmentEntry.Key)"}
+    }
+  }
+  # [2026-09-03 11:14:29] 作用：输出第二套出口代理就绪标记；理由依据：日志必须能与 58% 业务故障及第一套未改状态明确区分。
+  Write-Host "KNOWLEDGE_COMMERCIAL_EGRESS_PROXY_READY candidate=$egressProxyName status=$egressProxyStatus services=$(@($egressProxyContract.WorkerServices).Count) override_sha256=$egressOverrideHash first_stack_changed=false"
+}
 # [2026-09-01 18:25:18] 作用：在镜像预检通过后仅重建已确认归属当前 profile 的冲突商业网络；理由依据：保留全部命名卷并缩短第二套停机窗口，第一套和数据库网络不参与。
 if($commercialNetworkRequiresRecreate){
   # [2026-09-01 18:25:18] 作用：从已展开的同一 Compose 合同提取全部商业容器名；理由依据：只按项目名执行 down 已在目标机漏掉旧网络上的活跃端点。
@@ -924,6 +1228,15 @@ if($commercialNetworkUsesFixedIpam){
 $pgbouncerCreateExitCode=$LASTEXITCODE
 # [2026-08-31 17:59:08] 作用：阻断 PgBouncer 容器创建失败；理由依据：禁止把镜像、Compose 或环境错误改写成健康超时。
 if($pgbouncerCreateExitCode-ne0){throw "商业知识 PgBouncer 容器创建失败，exit=$pgbouncerCreateExitCode"}
+# [2026-09-03 13:18:02] 作用：在商业网络真实创建后复用已选代理执行第二次容器出口探针；理由依据：最终模型 Worker 位于该网络，必须证明其路由与 default bridge 一致可用。
+if($null-ne$egressProxyContract){
+  # [2026-09-03 13:18:03] 作用：以选定代理和商业网络执行模型供应商 HTTPS 探针；理由依据：同一代理、同一镜像和同一 NO_PROXY 才能闭合冷启动出口合同。
+  $commercialEgressProbeResult=Invoke-KmEgressProxyProbe -Image $egressProbeImage -ProbeUrl $egressProxyContract.ProbeUrl -ProxyUrl $egressProxyUrl -NoProxy $egressProxyContract.NoProxy -Network $commercialNetwork
+  # [2026-09-03 13:18:04] 作用：阻断商业网络出口探针失败；理由依据：不能让已创建的 PgBouncer 继续扩展成会在 58% 超时的完整服务图。
+  if(-not$commercialEgressProbeResult.Passed){throw "第二套商业网络出口未通过：network=$commercialNetwork proxy=$egressProxyName exit=$($commercialEgressProbeResult.ExitCode) status=$($commercialEgressProbeResult.Status) output=$(($commercialEgressProbeResult.Output)-join' | ')"}
+  # [2026-09-03 13:18:05] 作用：输出商业网络出口已验证标记；理由依据：现场日志必须区分 default bridge 探针和真实 Worker 网络探针。
+  Write-Host "KNOWLEDGE_COMMERCIAL_EGRESS_PROXY_NETWORK_READY network=$commercialNetwork candidate=$egressProxyName status=$($commercialEgressProbeResult.Status) first_stack_changed=false"
+}
 # [2026-09-02 10:30:25] 作用：只在固定 IPAM profile 创建后再次双向验真 PgBouncer endpoint；理由依据：Compose create 的零退出码不能证明网络侧和容器侧都已同步。
 if($commercialNetworkUsesFixedIpam){
   # [2026-09-02 10:30:25] 作用：执行当前第二套 PgBouncer 商业网络创建后硬门禁；理由依据：缺 endpoint 或缺 km-pgbouncer 别名必须在启动连接池前明确失败。
